@@ -6,9 +6,6 @@ _MOJO.ObjectOrder = (function() {
 	}
 
 
-	//var ObjectOrder_prototype = (ObjectOrder.prototype = Object.create( Array.prototype ));
-
-
 	var ObjectOrder_prototype = (ObjectOrder.prototype = {});
 
 
@@ -43,13 +40,9 @@ _MOJO.ObjectOrder = (function() {
 				return order.indexOf( key ) < 0;
 			});
 
-			console.log(addKeys);
-
 			var removeKeys = order.filter(function( key , i ) {
 				return keys.indexOf( key ) < 0;
 			});
-
-			console.log(removeKeys);
 
 			order = ([]).concat( order.slice() ).concat( addKeys );
 

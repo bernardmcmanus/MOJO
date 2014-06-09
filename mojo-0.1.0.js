@@ -13,7 +13,7 @@ _MOJO.CompareArray = (function() {
 
 		for (var i = 0, l = subject.length; i < l; i++) {
 			if (subject[i] instanceof Array && array[i] instanceof Array) {
-				if (!subject[i].compare( array[i] )) {
+				if (!CompareArray( subject[i] , array[i] )) {
 					return false;
 				}
 			}
@@ -64,9 +64,6 @@ _MOJO.ObjectOrder = (function() {
 	}
 
 
-	//var ObjectOrder_prototype = (ObjectOrder.prototype = Object.create( Array.prototype ));
-
-
 	var ObjectOrder_prototype = (ObjectOrder.prototype = {});
 
 
@@ -101,13 +98,9 @@ _MOJO.ObjectOrder = (function() {
 				return order.indexOf( key ) < 0;
 			});
 
-			console.log(addKeys);
-
 			var removeKeys = order.filter(function( key , i ) {
 				return keys.indexOf( key ) < 0;
 			});
-
-			console.log(removeKeys);
 
 			order = ([]).concat( order.slice() ).concat( addKeys );
 
@@ -238,6 +231,40 @@ _MOJO.When = (function() {
 
 
     function EventHandler( func ) {
+
+        //func.handler = func;
+        func.context = null;
+        func.args = [];
+
+        func.invoke = function() {
+            var that = this;
+            var args = that.getArgs();
+            that.apply( that.context , args );
+        };
+
+        func.getArgs = function() {
+            return this.args || [];
+        };
+
+        func.setArgs = function( args ) {
+            this.args = args;
+        };
+
+        func.concatArgs = function( args ) {
+            var that = this;
+            var thisargs = that.getArgs();
+            that.args = thisargs.concat( args );
+        };
+
+        func.purge = function() {
+            this.setArgs( [] );
+        };
+
+        return func;
+    }
+
+
+    /*function EventHandler( func ) {
         this.handler = func;
         this.context = null;
         this.args = [];
@@ -269,7 +296,7 @@ _MOJO.When = (function() {
         purge: function() {
             this.setArgs( [] );
         }
-    };
+    };*/
 
 
     return When;

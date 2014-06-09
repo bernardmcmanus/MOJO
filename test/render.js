@@ -80,10 +80,10 @@ window.Render = (function() {
 			case 'array':
 				var str = JSON.stringify( subject );
 				str = str.replace( /\"/g , '\'' );
-				str = str.replace( /\{\'/g , '\{' );
-				str = str.replace( /\,\'/g , '\, ' );
-				str = str.replace( /\:/g , '\: ' );
-				str = str.replace( /\'\:/g , '\: ' );
+				// str = str.replace( /\{\'/g , '\{' );
+				// str = str.replace( /\'\,\'/g , '\, ' );
+				// str = str.replace( /\:/g , '\: ' );
+				// str = str.replace( /\'\:/g , '\: ' );
 				return str;
 
 			case 'function':

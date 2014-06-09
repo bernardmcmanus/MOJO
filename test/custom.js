@@ -17,28 +17,34 @@
 		console.log(arguments);
 	}
 
-	mojo.when( 'cool' , rad );
-
-	mojo.when( 'change' , onchange );
-
 	function onchange( type , key ) {
 		Render();
 		console.log('change: type = ' + type + ', key = ' + key );
-		console.log(mojo.order);
 	}
+
+	mojo.when( 'cool' , rad );
+	mojo.when( 'change' , onchange );
 
 	setTimeout(function() {
 		mojo.set( 'nutzo' , 'yeah brah' );
-		mojo.dispel( 'change' , onchange );
 	}, 1000);
+
+	setTimeout(function() {
+		mojo.happen( 'cool' , 'cool!' );
+		//mojo.dispel( 'change' , onchange );
+	}, 2000);
 
 	setTimeout(function() {
 		delete mojo.gnarly;
 		delete mojo.rad;
+		mojo.remove( 'cray' );
 		mojo.sup = 'g';
-		console.log(mojo.order);
 		Render();
 	}, 3000);
+
+	setTimeout(function() {
+		console.log(mojo.order);
+	}, 4000);
 
 	console.log(mojo);
 

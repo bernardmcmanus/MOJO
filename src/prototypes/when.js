@@ -83,6 +83,40 @@ _MOJO.When = (function() {
 
 
     function EventHandler( func ) {
+
+        //func.handler = func;
+        func.context = null;
+        func.args = [];
+
+        func.invoke = function() {
+            var that = this;
+            var args = that.getArgs();
+            that.apply( that.context , args );
+        };
+
+        func.getArgs = function() {
+            return this.args || [];
+        };
+
+        func.setArgs = function( args ) {
+            this.args = args;
+        };
+
+        func.concatArgs = function( args ) {
+            var that = this;
+            var thisargs = that.getArgs();
+            that.args = thisargs.concat( args );
+        };
+
+        func.purge = function() {
+            this.setArgs( [] );
+        };
+
+        return func;
+    }
+
+
+    /*function EventHandler( func ) {
         this.handler = func;
         this.context = null;
         this.args = [];
@@ -114,7 +148,7 @@ _MOJO.When = (function() {
         purge: function() {
             this.setArgs( [] );
         }
-    };
+    };*/
 
 
     return When;
