@@ -6,16 +6,6 @@ MOJO = (function( _MOJO ) {
 	});
 
 
-	MOJO.select = function() {
-		// allow selecting instances with selectors
-	};
-
-
-	MOJO.trigger = function() {
-		// trigger events for all or selected instances
-	};
-
-
 	function MOJO( seed ) {
 
 		seed = seed || {};
@@ -67,58 +57,15 @@ MOJO = (function( _MOJO ) {
 	var MOJO_prototype = (MOJO.prototype = Object.create( new _MOJO.When() ));
 
 
-	MOJO_prototype.each = function(/* exposeIterator , callback */) {
+	MOJO_prototype.each = function() {
 
-		var exposeIterator, callback;
+		var args = arguments;
+		var length = args.length;
+		var exposeIterator = (length > 1 ? args[0] : false);
+		var callback = args[length - 1];
 
-		if (arguments.length > 1) {
-			exposeIterator = arguments[0];
-			callback = arguments[1];
-		}
-		else {
-			callback = arguments[0];
-		}
-
-		var that = this;
-		var keys = that.keys;
-		var iterator = {};
-		var i;
-
-		if (exposeIterator) {
-
-			iterator = new MOJO.Iterator();
-
-			iterator.setIncrementor(function() {
-				i++;
-			});
-
-			iterator.setDecrementor(function() {
-				i--;
-			});
-		}
-
-		for (i = 0; i < keys.length; i++) {
-
-			var key = keys[i];
-
-			if (exposeIterator) {
-				/*iterator.setUpdater(function( val ) {
-					that[key] = val;
-				});*/
-			}
-
-			var args = [ iterator , that[key] , key , i ];
-
-			if (!exposeIterator) {
-				args.shift();
-			}
-
-			callback.apply( that , args );
-
-			if (iterator.isBreak) {
-				break;
-			}
-		}
+		MOJO.each( exposeIterator , this , callback );
+		return this;
 	};
 
 
@@ -142,11 +89,17 @@ MOJO = (function( _MOJO ) {
 	};
 
 
+	MOJO_prototype.getNthKey = function( n ) {
+		return this.order[n];
+	};
+
+
 	MOJO_prototype.set = function( key , value ) {
 		var that = this;
 		that[key] = value;
 		that._order.add( key );
-		that.happen( 'change' , [ 'set' , key ] );
+		var index = that.indexOfKey( key );
+		that.happen( 'set' , [ key , index ] );
 		return that[key];
 	};
 
@@ -156,9 +109,10 @@ MOJO = (function( _MOJO ) {
 		if (!that.hasKey( key )) {
 			return;
 		}
+		var index = that.indexOfKey( key );
 		delete that[key];
 		that._order.remove( key );
-		that.happen( 'change' , [ 'remove' , key ] );
+		that.happen( 'remove' , [ key , index ] );
 	};
 
 

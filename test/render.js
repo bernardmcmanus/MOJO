@@ -37,6 +37,12 @@ window.Render = (function() {
 		keys = _createPair( keys , keysString , 'keys' , 'array' , true );
 		$(hierarchy).append( keys );
 
+		// add the order property
+		var order = _createLI( '' , 1 );
+		var orderString = _getValueByType( Mojo.order , 'array' );
+		order = _createPair( order , orderString , 'order' , 'array' , true );
+		$(hierarchy).append( order );
+
 		// add the vals property
 		var vals = _createLI( '' , 1 );
 		var valsString = _getValueByType( Mojo.values , 'array' );

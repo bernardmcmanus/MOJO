@@ -44,7 +44,7 @@ _MOJO.ObjectOrder = (function() {
 				return keys.indexOf( key ) < 0;
 			});
 
-			order = ([]).concat( order.slice() ).concat( addKeys );
+			order = order.concat( addKeys );
 
 			order = order.filter(function( key , i ) {
 				return removeKeys.indexOf( key ) < 0;
