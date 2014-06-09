@@ -1,0 +1,23 @@
+{
+    "name": "MOJO",
+    "version": "0.1.0",
+    "homepage": "https://github.com/elnarddogg/MOJO",
+    "authors": [
+        "Bernard McManus"
+    ],
+    "description": "The Modern JavaScript Object",
+    "main": "mojo-0.1.0.min.js",
+    "keywords": [
+        "javascript",
+        "object",
+        "data"
+    ],
+    "license": "MIT",
+    "ignore": [
+        "**/.*",
+        "node_modules",
+        "bower_components",
+        "test",
+        "tests"
+    ]
+}

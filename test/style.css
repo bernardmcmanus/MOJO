@@ -1,0 +1,130 @@
+/*
+**
+**  DARK	|	rgb(30,30,31)		|	#1E1E1F
+**  PURLPLE |   rgb(115,92,175)		|   #735CAF
+**  GREEN   |   rgb(94,163,54)		|   #5EA336
+**  BLUE	|   rgb(67,176,222)		|	#43B0DE
+**  ORANGE  |   rgb(221,127,46)		|	#DD7F2E
+**  GRAY	|   rgb(160,160,160)	|	#A0A0A0
+**  GRAY2	|   rgb(97,96,91)		|	#61605B
+**  YELLOW  |   rgb(225,191,50)		|	#E1BF32
+**  RED	 	|   rgb(185,52,38)		|	#B93426
+**
+*/
+
+
+body {
+	font-family: Monaco, Menlo, Consolas, 'Courier New', monospace;
+	font-size: 18px;
+	background-color: rgb(30,30,31);
+}
+
+.hierarchy {
+	display: inline-block;
+	list-style: none;
+}
+
+.hierarchy li {
+	padding: 4px 0;
+	color: #A0A0A0;
+	white-space: nowrap;
+}
+
+.hierarchy .level-0 {
+	margin-left: 0;
+}
+
+.hierarchy .level-1 {
+	margin-left: 20px;
+}
+
+.hierarchy .boolean {
+	color: #735CAF;
+}
+
+.hierarchy .string {
+	color: #E1BF32;
+}
+
+.hierarchy .number {
+	color: #43B0DE;
+}
+
+.hierarchy .array {
+	color: #B93426;
+}
+
+.hierarchy .object {
+	color: #DD7F2E;
+}
+
+.hierarchy .function {
+	color: #5EA336;
+}
+
+.hierarchy .private {
+	font-style: italic;
+	color: #61605B;
+}
+
+.hierarchy .array,
+.hierarchy .object,
+.hierarchy .function
+{
+	cursor: pointer;
+}
+
+.hierarchy .array:hover,
+.hierarchy .object:hover,
+.hierarchy .function:hover
+{
+	text-decoration: underline;
+}
+
+.toggle .off {
+	display: none;
+}
+
+.toggle:not(.expanded) .off {
+	display: inline;
+}
+
+.toggle:not(.expanded) .on {
+	display: none;
+}
+
+.hierarchy .remove {
+	cursor: pointer;
+	color: rgb(128,84,74);
+	float: left;
+	margin-left: -20px;
+	margin-right: 10px;
+	padding: 0 5px;
+	visibility: hidden;
+}
+
+.hierarchy .removeable .remove {
+	visibility: visible;
+}
+
+.hierarchy .remove:hover {
+	color: #fff;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
