@@ -22,7 +22,8 @@ MOJO = (function( _MOJO ) {
 			},
 			set: function( value ) {
 				handlers = value;
-			}
+			},
+			configurable: true
 		});
 
 		Object.defineProperty( that , 'keys' , {
