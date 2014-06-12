@@ -3,18 +3,11 @@ module.exports = function( grunt ) {
 
 	var src = [
 		'src/namespace.js',
-		'src/private/methods/compareArray.js',
-		'src/private/modules/objectOrder/objectOrder.js',
-		'src/private/modules/when/when.js',
-		'src/private/modules/when/eventHandler.js',
+		'src/private/when/when.js',
+		'src/private/when/eventHandler.js',
+		'src/private/when/eventFactory.js',
 		'src/public/mojo.js',
-		'src/public/methods/extend.js',
-		'src/public/methods/each.js',
-		'src/public/methods/select.js',
-		'src/public/methods/when.js',
-		'src/public/methods/happen.js',
-		'src/public/methods/dispel.js',
-		'src/public/modules/iterator.js'
+		'src/public/methods/extend.js'
 	];
 
 

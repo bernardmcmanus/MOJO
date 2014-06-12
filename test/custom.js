@@ -1,7 +1,7 @@
 (function() {
 
 
-	var notMojo = {
+	/*var template = {
 		whoa: true,
 		cool: 'awesome',
 		gnarly: 'sweet',
@@ -11,10 +11,81 @@
 		rad: function () {
 			console.log(that);
 		}
-	};
+	};*/
 
 
-	var mojo = new MOJO( notMojo );
+	var mojos = [];
+
+
+	mojos.push(
+		new MOJO()
+	);
+
+
+	mojos[0].when( 'set remove' , onchange );
+	mojos[0].when( 'cool' , coolHappens );
+
+
+	mojos.push(
+		new MOJO()
+	);
+
+
+	mojos[1].when( 'set remove' , onchange );
+	mojos[1].when( 'cool' , coolHappens );
+	mojos[1].when( 'set' , onchange2 );
+
+
+	function onchange( e , key ) {
+		console.log(e);
+		console.log('change: type = ' + e.type + ', key = ' + key);
+		console.log(mojos);
+	}
+
+
+	function onchange2( e ) {
+		console.log('onchange2',e);
+	}
+
+
+	function coolHappens() {
+		console.log('cool',arguments);
+		mojos[1].dispel( 'cool' );
+	}
+
+
+	setTimeout(function() {
+		mojos[0].set( 'cool' , 'awesome' );
+	}, 1000 );
+
+	setTimeout(function() {
+		mojos[1].set( 'cool' , 'rad' );
+	}, 1500 );
+
+	setTimeout(function() {
+		mojos[0].remove( 'cool' );
+	}, 2000 );
+
+	setTimeout(function() {
+		mojos[1].remove( 'cool' );
+	}, 2500 );
+
+	setTimeout(function() {
+		mojos[0].happen( 'cool' );
+		mojos[1].happen( 'cool' );
+	}, 3000 );
+
+	setTimeout(function() {
+		mojos[1].set( 'cool' , 'rad' );
+	}, 3500 );
+
+
+
+
+
+
+
+
 
 
 	/*console.log( '----- NON-MOJO STATIC EACH -----' );
@@ -55,7 +126,7 @@
 	return;*/
 
 
-	function rad() {
+	/*function rad() {
 		console.log(arguments);
 	}
 
@@ -92,7 +163,7 @@
 	console.log(mojo);
 
 
-	Render( '.hierarchy' , mojo );
+	Render( '.hierarchy' , mojo );*/
 
 
 }());

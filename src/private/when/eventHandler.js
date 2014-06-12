@@ -1,20 +1,21 @@
-_MOJO.When.EventHandler = (function() {
+_MOJO.EventHandler = (function() {
 
 
 	function EventHandler( func ) {
-		this.handler = func;
-		this.context = null;
-		this.args = [];
+		var that = this;
+		that.handler = func;
+		that.args = [];
 	}
 
 
 	var EventHandler_prototype = (EventHandler.prototype = {});
 
 
-	EventHandler_prototype.invoke = function( args ) {
+	EventHandler_prototype.invoke = function( event , args ) {
 		var that = this;
 		var Args = that.getArgs().concat( args || [] );
-		that.handler.apply( that.context , Args );
+		Args.unshift( event );
+		that.handler.apply( null , Args );
 	};
 
 
@@ -24,7 +25,10 @@ _MOJO.When.EventHandler = (function() {
 
 
 	EventHandler_prototype.bind = function( args ) {
-		this.args = args;
+		if (args === undefined) {
+			return;
+		}
+		this.args = args instanceof Array ? args : [ args ];
 	};
 
 

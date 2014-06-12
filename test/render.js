@@ -16,7 +16,17 @@ window.Render = (function() {
 		$(hierarchy).children().remove();
 		
 		// add a key-value pair for each property
-		Mojo.each(function( val , key ) {
+		for (var i = 0; i < Mojo.keys.length; i++) {
+			var key = Mojo.keys[i];
+			var val = Mojo[key];
+			var li = _createLI( '' , 1 );
+			var type = _getType( val );
+			var value = _getValueByType( val , type );
+
+			li = _createPair( li , value , key , type );
+			$(hierarchy).append( li );
+		}
+		/*Mojo.each(function( val , key ) {
 			
 			var li = _createLI( '' , 1 );
 			var type = _getType( val );
@@ -24,7 +34,7 @@ window.Render = (function() {
 
 			li = _createPair( li , value , key , type );
 			$(hierarchy).append( li );
-		});
+		});*/
 		
 		// add the length property
 		var len = _createLI( '' , 1 );
