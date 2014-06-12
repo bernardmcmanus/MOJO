@@ -19,6 +19,9 @@ MOJO = (function( _MOJO ) {
 		Object.defineProperty( that , 'handlers' , {
 			get: function() {
 				return handlers;
+			},
+			set: function( value ) {
+				handlers = value;
 			}
 		});
 
