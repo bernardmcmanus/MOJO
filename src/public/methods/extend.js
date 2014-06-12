@@ -12,7 +12,7 @@ MOJO.Extend = (function() {
         for(var i = 0; i < args.length; i++){
             for(var key in args[i]){
                 var value = args[i][key];
-                if(value !== 'undefined'){
+                if(value !== undefined){
                     if(value !== null && typeof(value) == 'object' && !value.nodeType ){
                         if( value instanceof Array){
                             destination[key] = this.extend([], value);

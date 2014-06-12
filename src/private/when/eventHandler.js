@@ -8,27 +8,25 @@ _MOJO.EventHandler = (function() {
 	}
 
 
-	var EventHandler_prototype = (EventHandler.prototype = {});
+	EventHandler.prototype = {
 
+		invoke: function( event , args ) {
+			var that = this;
+			var Args = that.getArgs().concat( args || [] );
+			Args.unshift( event );
+			that.handler.apply( null , Args );
+		},
 
-	EventHandler_prototype.invoke = function( event , args ) {
-		var that = this;
-		var Args = that.getArgs().concat( args || [] );
-		Args.unshift( event );
-		that.handler.apply( null , Args );
-	};
+		getArgs: function() {
+			return this.args || [];
+		},
 
-
-	EventHandler_prototype.getArgs = function() {
-		return this.args || [];
-	};
-
-
-	EventHandler_prototype.bind = function( args ) {
-		if (args === undefined) {
-			return;
+		bind: function( args ) {
+			if (args === undefined) {
+				return;
+			}
+			this.args = args instanceof Array ? args : [ args ];
 		}
-		this.args = args instanceof Array ? args : [ args ];
 	};
 
 
