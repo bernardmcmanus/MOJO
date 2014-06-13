@@ -14,50 +14,29 @@ MOJO = (function( _MOJO ) {
 			that[key] = seed[key];
 		}
 
-		var handlers = {};
-
-		Object.defineProperty( that , 'handlers' , {
-			get: function() {
-				return handlers;
-			},
-			set: function( value ) {
-				handlers = value;
-			},
-			configurable: true
-		});
-
-		Object.defineProperty( that , 'keys' , {
-			get: function() {
-				return Object.keys( that );
-			}
-		});
-
-		Object.defineProperty( that , 'values' , {
-			get: function() {
-				return that.keys.map(function( key , i ) {
-					return that[key];
-				});
-			}
-		});
-
-		Object.defineProperty( that , 'length' , {
-			get: function() {
-				return that.keys.length;
-			}
-		});
+		MOJO.Hoist( that );
 	}
 
 
 	var MOJO_prototype = (MOJO.prototype = new _MOJO.When());
 
 
-	MOJO_prototype.hasValue = function( val ) {
-		return this.values.indexOf( val ) >= 0;
+	MOJO_prototype.indexOfValue = function( val ) {
+		return this.values.indexOf( val );
 	};
 
 
-	MOJO_prototype.indexOfValue = function( val ) {
-		return this.values.indexOf( val );
+	MOJO_prototype.keyOfValue = function( val ) {
+		var that = this;
+		if (that.hasValue( val )) {
+			return that.keys[ that.indexOfValue( val ) ];
+		}
+		return false;
+	};
+
+
+	MOJO_prototype.hasValue = function( val ) {
+		return this.indexOfValue( val ) >= 0;
 	};
 
 
@@ -71,9 +50,6 @@ MOJO = (function( _MOJO ) {
 
 	MOJO_prototype.remove = function( key ) {
 		var that = this;
-		if (!that.hasOwnProperty( key )) {
-			return;
-		}
 		delete that[key];
 		that.happen( 'remove' , key );
 	};

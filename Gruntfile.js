@@ -7,7 +7,8 @@ module.exports = function( grunt ) {
 		'src/private/when/eventHandler.js',
 		'src/private/when/eventFactory.js',
 		'src/public/mojo.js',
-		'src/public/methods/extend.js'
+		'src/public/methods/extend.js',
+		'src/public/methods/hoist.js'
 	];
 
 
