@@ -30,7 +30,8 @@ MOJO.Hoist = (function() {
         Object_defineProperty( subject , 'keys' , {
             get: function() {
                 return Object.keys( subject );
-            }
+            },
+            configurable: true
         });
 
         Object_defineProperty( subject , 'values' , {
@@ -38,13 +39,15 @@ MOJO.Hoist = (function() {
                 return subject.keys.map(function( key , i ) {
                     return subject[key];
                 });
-            }
+            },
+            configurable: true
         });
 
         Object_defineProperty( subject , 'length' , {
             get: function() {
                 return subject.keys.length;
-            }
+            },
+            configurable: true
         });
     }
 
