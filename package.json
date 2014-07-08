@@ -1,7 +1,7 @@
 {
     "name": "MOJO",
     "description": "The Modern JavaScript Object",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "author": "Bernard McManus",
     "repository": {
         "type": "git",

@@ -40,13 +40,9 @@ MOJO = (function( _MOJO ) {
 	};
 
 
-	MOJO_prototype.nextKey = function( key ) {
-		if (!key) {
-			return this.keys[0];
-		}
-		var keys = this.keys;
-		var index = keys.indexOf( key );
-		return index < keys.length - 1 ? keys[index+1] : false;
+	MOJO_prototype.each = function( iterator ) {
+		var that = this;
+		MOJO.Each( that , iterator , that.keys );
 	};
 
 
