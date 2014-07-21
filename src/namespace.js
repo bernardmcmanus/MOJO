@@ -1,2 +1,2 @@
-window._MOJO = {};
-window.MOJO = {};
+var _MOJO = {};
+var MOJO = {};

@@ -6,38 +6,16 @@ MOJO = (function( _MOJO ) {
 		seed = seed || {};
 
 		var that = this;
-		var keys = Object.keys( seed );
-		var length = keys.length;
 
-		for (var i = 0; i < length; i++) {
-			var key = keys[i];
-			that[key] = seed[key];
-		}
+		MOJO.Each( seed , function( val , key ) {
+			that[key] = val;
+		});
 
 		MOJO.Hoist( that );
 	}
 
 
 	var MOJO_prototype = (MOJO.prototype = new _MOJO.When());
-
-
-	MOJO_prototype.indexOfValue = function( val ) {
-		return this.values.indexOf( val );
-	};
-
-
-	MOJO_prototype.keyOfValue = function( val ) {
-		var that = this;
-		if (that.hasValue( val )) {
-			return that.keys[ that.indexOfValue( val ) ];
-		}
-		return false;
-	};
-
-
-	MOJO_prototype.hasValue = function( val ) {
-		return this.indexOfValue( val ) >= 0;
-	};
 
 
 	MOJO_prototype.each = function( iterator ) {
@@ -64,7 +42,7 @@ MOJO = (function( _MOJO ) {
 	return MOJO;
 
 
-}( window._MOJO ));
+}( _MOJO ));
 
 
 

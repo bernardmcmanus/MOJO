@@ -1,9 +1,10 @@
-/*
-**  Written by Luke "Famous" Wilson
-**  http://bootylist.com/
-*/
-
 MOJO.Extend = (function() {
+
+
+    /*
+    **  Written by Luke "Famous" Wilson
+    **  http://bootylist.com
+    */
 
 
     function Extend() {

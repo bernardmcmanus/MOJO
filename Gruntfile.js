@@ -3,13 +3,14 @@ module.exports = function( grunt ) {
 
 	var src = [
 		'src/namespace.js',
-		'src/private/when/when.js',
-		'src/private/when/eventHandler.js',
-		'src/private/when/eventFactory.js',
-		'src/public/mojo.js',
-		'src/public/methods/each.js',
-		//'src/public/methods/extend.js',
-		'src/public/methods/hoist.js'
+		'src/when/when.js',
+		'src/when/eventHandler.js',
+		'src/when/mojoEvent.js',
+		'src/mojo.js',
+		'src/methods/each.js',
+		//'src/methods/extend.js',
+		'src/methods/hoist.js',
+		'src/definition.js'
 	];
 
 
@@ -18,7 +19,7 @@ module.exports = function( grunt ) {
 		pkg: grunt.file.readJSON( 'package.json' ),
 
 		jshint : {
-			all : [ 'Gruntfile.js' , 'src/prototypes/*.js' , 'src/*.js' ]
+			all : [ 'Gruntfile.js' ].concat( src )
 		},
 
 		clean : [ 'mojo-*.js' ],
@@ -27,16 +28,40 @@ module.exports = function( grunt ) {
 
 			dev: {
 				options: {
-					patterns: [
-						{
-							match : /(\.\.\/mojo\-)(.*?)(\.js)/,
-							replacement : '../mojo-<%= pkg.version %>.js'
-						}
-					]
+					patterns: [{
+						match : /(\.\.\/mojo\-)(.*?)(\.js)/,
+						replacement : '../mojo-<%= pkg.version %>.js'
+					}]
 				},
 				files: [{
 					src: 'test/index.html',
 					dest: 'test/index.html'
+				}]
+			},
+
+			debugProd: {
+				options: {
+					patterns: [{
+						match : /(\.\.\/mojo\-)(.*?)(\.js)/,
+						replacement : '../mojo-<%= pkg.version %>.min.js'
+					}]
+				},
+				files: [{
+					src: 'test/index.html',
+					dest: 'test/index.html'
+				}]
+			},
+
+			pkg: {
+				options: {
+					patterns: [{
+						match: /(\"main\")(.*?)(\")(.{1,}?)(\")/i,
+						replacement: '\"main\": \"mojo-<%= pkg.version %>.min.js\"'
+					}]
+				},
+				files: [{
+					src: 'package.json',
+					dest: 'package.json'
 				}]
 			},
 
@@ -72,10 +97,16 @@ module.exports = function( grunt ) {
 			}
 		},
 
-		watch: [{
-			files: ([ 'package.json' ]).concat( src ),
-			tasks: [ 'dev' ]
-		}],
+		watch: {
+			dev: {
+				files: ([ 'package.json' ]).concat( src ),
+				tasks: [ 'dev' ]
+			},
+			debugProd: {
+				files: ([ 'package.json' ]).concat( src ),
+				tasks: [ 'default' ]
+			}
+		},
 
 		concat: {
 			options: {
@@ -111,6 +142,7 @@ module.exports = function( grunt ) {
 	grunt.registerTask( 'default' , [
 		'jshint',
 		'clean',
+		'replace:pkg',
 		'replace:bower',
 		'uglify'
 	]);
@@ -124,6 +156,12 @@ module.exports = function( grunt ) {
 
 	grunt.registerTask( 'debug' , [
 		'dev',
-		'watch'
+		'watch:dev'
+	]);
+
+	grunt.registerTask( 'debugProd' , [
+		'default',
+		'replace:debugProd',
+		'watch:debugProd'
 	]);
 };

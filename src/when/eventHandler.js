@@ -1,10 +1,13 @@
 _MOJO.EventHandler = (function() {
 
 
-	function EventHandler( func ) {
+	function EventHandler( func , args ) {
 		var that = this;
 		that.handler = func;
-		that.args = [];
+		that.args = (function( args ) {
+			args = (args !== undefined ? args : []);
+			return (args instanceof Array ? args : [ args ]);
+		}( args ));
 	}
 
 
@@ -12,20 +15,9 @@ _MOJO.EventHandler = (function() {
 
 		invoke: function( event , args ) {
 			var that = this;
-			var Args = that.getArgs().concat( args || [] );
+			var Args = that.args.concat( args || [] );
 			Args.unshift( event );
 			that.handler.apply( null , Args );
-		},
-
-		getArgs: function() {
-			return this.args || [];
-		},
-
-		bind: function( args ) {
-			if (args === undefined) {
-				return;
-			}
-			this.args = args instanceof Array ? args : [ args ];
 		}
 	};
 
