@@ -72,9 +72,10 @@ _MOJO.When = (function() {
         },
 
         _removeHandler: function( handlerArray , handlerFunc ) {
-            handlerArray.splice(
-                indexOfHandler( handlerArray , handlerFunc ) , 1
-            );
+            var index = indexOfHandler( handlerArray , handlerFunc );
+            if (index >= 0) {
+                handlerArray.splice( index , 1 );
+            }
         }
     };
 
