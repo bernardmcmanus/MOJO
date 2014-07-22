@@ -153,18 +153,24 @@ module.exports = function( grunt ) {
 
 	grunt.registerTask( 'createHash' , function() {
 
-		grunt.task.requires( 'git-describe' );
+        grunt.task.requires( 'git-describe' );
 
-		var rev = grunt.config.get( 'git-version' );
-		var matches = rev.match( /^([A-Za-z0-9]{7})/ );
+        var rev = grunt.config.get( 'git-version' );
+        var matches = rev.match( /(\-{0,1})+([A-Za-z0-9]{7})+(\-{0,1})/ );
 
-		if (matches && matches.length > 1) {
-			grunt.config.set( 'git-hash' , matches[1] );
-		}
-		else{
-			grunt.config.set( 'git-hash' , rev );
-		}
-	});
+        var hash = matches
+            .filter(function( match ) {
+                return match.length === 7;
+            })
+            .pop();
+
+        if (matches && matches.length > 1) {
+            grunt.config.set( 'git-hash' , hash );
+        }
+        else{
+            grunt.config.set( 'git-hash' , rev );
+        }
+    });
 
 
 	grunt.registerTask( 'default' , [
