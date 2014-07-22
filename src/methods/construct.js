@@ -14,36 +14,32 @@ MOJO.Construct = (function() {
 
         Object.defineProperties( subject , {
 
-            handlers: {
-                get: function() {
-                    return handlers;
-                },
-                configurable: true
-            },
+            handlers: createDescriptor(function() {
+                return handlers;
+            }),
 
-            keys: {
-                get: function() {
-                    return Object.keys( subject );
-                },
-                configurable: true
-            },
+            keys: createDescriptor(function() {
+                return Object.keys( subject );
+            }),
 
-            values: {
-                get: function() {
-                    return subject.keys.map(function( key ) {
-                        return subject[key];
-                    });
-                },
-                configurable: true
-            },
+            values: createDescriptor(function() {
+                return subject.keys.map(function( key ) {
+                    return subject[key];
+                });
+            }),
 
-            length: {
-                get: function() {
-                    return subject.keys.length;
-                },
-                configurable: true
-            }
+            length: createDescriptor(function() {
+                return subject.keys.length;
+            })
         });
+    }
+
+
+    function createDescriptor( getter ) {
+        return {
+            get: getter,
+            configurable: true
+        };
     }
 
 
