@@ -1,14 +1,14 @@
-MOJO.Hoist = (function() {
+MOJO.Construct = (function() {
 
 
     /*
-    **  When MOJO is used to construct a prototype, call
-    **  MOJO.Hoist( instance ) within your object's constructor
-    **  to define key properties on the object's top level
+    **  When MOJO.Create is used to create a prototype, call
+    **  MOJO.Construct( instance ) within your object's constructor
+    **  to define key properties on the object's uppermost level
     */
 
 
-    function Hoist( subject ) {
+    function Construct( subject ) {
 
         var handlers = {};
 
@@ -47,7 +47,7 @@ MOJO.Hoist = (function() {
     }
 
 
-    return Hoist;
+    return Construct;
 
     
 }());

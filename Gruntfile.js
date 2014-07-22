@@ -9,7 +9,8 @@ module.exports = function( grunt ) {
 		'src/mojo.js',
 		'src/methods/each.js',
 		//'src/methods/extend.js',
-		'src/methods/hoist.js',
+		'src/methods/create.js',
+		'src/methods/construct.js',
 		'src/definition.js'
 	];
 

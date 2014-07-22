@@ -11,11 +11,11 @@ MOJO = (function( _MOJO ) {
 			that[key] = val;
 		});
 
-		MOJO.Hoist( that );
+		MOJO.Construct( that );
 	}
 
 
-	var MOJO_prototype = (MOJO.prototype = new _MOJO.When());
+	var MOJO_prototype = (MOJO.prototype = Object.create( _MOJO.When ));
 
 
 	MOJO_prototype.each = function( iterator ) {

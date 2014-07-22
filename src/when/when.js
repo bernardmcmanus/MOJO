@@ -1,10 +1,7 @@
 _MOJO.When = (function() {
 
 
-    function When() {}
-
-
-    When.prototype = {
+    return {
 
         when: function() {
 
@@ -61,13 +58,14 @@ _MOJO.When = (function() {
         },
 
         _getHandlers: function( eventType ) {
-            var handlers = this.handlers;
+            var that = this;
+            var handlers = (that.handlers = that.handlers || {});
             return (eventType ? (handlers[eventType] || []) : handlers);
         },
 
         _addHandler: function( eventType , handlerFunc ) {
             var that = this;
-            var handlers = that.handlers;
+            var handlers = (that.handlers = that.handlers || {});
             (handlers[eventType] = handlers[eventType] || []).push( handlerFunc );
         },
 
@@ -97,9 +95,6 @@ _MOJO.When = (function() {
     function eachEventType( eventType , callback ) {
         eventType.split( ' ' ).forEach( callback );
     }
-
-
-    return When;
 
     
 }());
