@@ -19,6 +19,13 @@ module.exports = function( grunt ) {
 
 		pkg: grunt.file.readJSON( 'package.json' ),
 
+		'git-describe': {
+			'options': {
+				prop: 'git-version'
+			},
+			dist : {}
+		},
+
 		jshint : {
 			all : [ 'Gruntfile.js' ].concat( src )
 		},
@@ -111,7 +118,7 @@ module.exports = function( grunt ) {
 
 		concat: {
 			options: {
-				banner : '/*! <%= pkg.name %> - <%= pkg.version %> - <%= pkg.author %> - <%= grunt.template.today("yyyy-mm-dd") %> */\n\n\n'
+				banner : '/*! <%= pkg.name %> - <%= pkg.version %> - <%= pkg.author.name %> - <%= grunt.config.get( \'git-hash\' ) %> - <%= grunt.template.today("yyyy-mm-dd") %> */\n\n\n'
 			},
 			build: {
 				src: src,
@@ -121,7 +128,7 @@ module.exports = function( grunt ) {
 
 		uglify: {
 			options: {
-				banner : '/*! <%= pkg.name %> - <%= pkg.version %> - <%= pkg.author %> - <%= grunt.template.today("yyyy-mm-dd") %> */\n'
+				banner : '/*! <%= pkg.name %> - <%= pkg.version %> - <%= pkg.author.name %> - <%= grunt.config.get( \'git-hash\' ) %> - <%= grunt.template.today("yyyy-mm-dd") %> */\n'
 			},
 			release : {
 				files : {
@@ -131,17 +138,39 @@ module.exports = function( grunt ) {
 		}
 	});
 
+	
+	[
+		'grunt-contrib-jshint',
+		'grunt-contrib-clean',
+		'grunt-git-describe',
+		'grunt-replace',
+		'grunt-contrib-concat',
+		'grunt-contrib-uglify',
+		'grunt-contrib-watch'
+	]
+	.forEach( grunt.loadNpmTasks );
 
-	grunt.loadNpmTasks( 'grunt-contrib-jshint' );
-	grunt.loadNpmTasks( 'grunt-contrib-clean' );
-	grunt.loadNpmTasks( 'grunt-replace' );
-	grunt.loadNpmTasks( 'grunt-contrib-concat' );
-	grunt.loadNpmTasks( 'grunt-contrib-uglify' );
-	grunt.loadNpmTasks( 'grunt-contrib-watch' );
+
+	grunt.registerTask( 'createHash' , function() {
+
+		grunt.task.requires( 'git-describe' );
+
+		var rev = grunt.config.get( 'git-version' );
+		var matches = rev.match( /^([A-Za-z0-9]{7})/ );
+
+		if (matches && matches.length > 1) {
+			grunt.config.set( 'git-hash' , matches[1] );
+		}
+		else{
+			grunt.config.set( 'git-hash' , rev );
+		}
+	});
 
 
 	grunt.registerTask( 'default' , [
 		'jshint',
+		'git-describe',
+		'createHash',
 		'clean',
 		'replace:pkg',
 		'replace:bower',
