@@ -3,9 +3,9 @@ module.exports = function( grunt ) {
 
 	var src = [
 		'src/namespace.js',
-		'src/when/when.js',
 		'src/when/eventHandler.js',
 		'src/when/mojoEvent.js',
+		'src/when/when.js',
 		'src/mojo.js',
 		'src/methods/each.js',
 		//'src/methods/extend.js',

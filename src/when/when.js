@@ -1,4 +1,4 @@
-_MOJO.When = (function() {
+_MOJO.When = (function( EventHandler , Event ) {
 
 
     return {
@@ -12,7 +12,7 @@ _MOJO.When = (function() {
             var handlerFunc = shift( args );
 
             eachEventType( eventType , function( type ) {
-                var _handler = new _MOJO.EventHandler( handlerFunc , bindArgs );
+                var _handler = new EventHandler( handlerFunc , bindArgs );
                 that._addHandler( type , _handler );
             });
         },
@@ -30,7 +30,7 @@ _MOJO.When = (function() {
             eachEventType( eventType , function( type ) {
 
                 var handlers = getHandlers( type );
-                var event = new _MOJO.Event( that , type );
+                var event = new Event( that , type );
 
                 handlers.forEach(function( eventHandler ) {
                     if (handlerExists( type , eventHandler )) {
@@ -97,7 +97,7 @@ _MOJO.When = (function() {
     }
 
     
-}());
+}( _MOJO.EventHandler , _MOJO.Event ));
 
 
 
