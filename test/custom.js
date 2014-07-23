@@ -4,7 +4,39 @@
 	//var MOJO = require( '../mojo-0.1.2.js' );
 
 
-	prototypeTest();
+	onceTest();
+
+
+	function onceTest() {
+
+		function CoolMOJO( name ) {
+			this.name = name;
+			this.isCool = true;
+			MOJO.Construct( this );
+		}
+
+		CoolMOJO.prototype = MOJO.Create({
+
+			test: function() {
+				console.log(this);
+			}
+		});
+
+		var cool = new CoolMOJO( 'cool' );
+
+		console.log(cool);
+
+		cool.once( 'stuffHappens1 stuffHappens2' , function( e ) {
+			console.log(e.type);
+		});
+
+		cool.when( 'stuffHappens3' , function( e ) {
+			console.log(e.type);
+		});
+
+		cool.happen( 'stuffHappens1 stuffHappens2 stuffHappens3' );
+		cool.happen( 'stuffHappens1 stuffHappens2 stuffHappens3' );
+	}
 
 
 	function prototypeTest() {

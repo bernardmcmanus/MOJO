@@ -3,6 +3,18 @@ _MOJO.When = (function( EventHandler , Event ) {
 
     return {
 
+        once: function() {
+
+            var that = this;
+            var handlers = that.when.apply( that , arguments );
+            
+            handlers.forEach(function( eventHandler ) {
+                eventHandler.callback = function( e , handlerFunc ) {
+                    that.dispel( e.type , handlerFunc );
+                };
+            });
+        },
+
         when: function() {
 
             var that = this;
@@ -10,11 +22,16 @@ _MOJO.When = (function( EventHandler , Event ) {
             var eventType = shift( args );
             var bindArgs = args.length > 1 ? shift( args ) : bindArgs;
             var handlerFunc = shift( args );
+            var eventHandlers = [];
 
-            eachEventType( eventType , function( type ) {
-                var _handler = new EventHandler( handlerFunc , bindArgs );
-                that._addHandler( type , _handler );
+            eachEventType( eventType , function( type , i ) {
+                eventHandlers.push(
+                    new EventHandler( handlerFunc , bindArgs )
+                );
+                that._addHandler( type , eventHandlers[i] );
             });
+            
+            return eventHandlers;
         },
 
         happen: function( eventType , args ) {
