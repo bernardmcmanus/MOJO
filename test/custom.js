@@ -22,20 +22,27 @@
 			}
 		});
 
-		var cool = new CoolMOJO( 'cool' );
+		var master = new CoolMOJO( 'master' );
 
-		console.log(cool);
-
-		cool.once( 'stuffHappens1 stuffHappens2' , function( e ) {
-			console.log(e.type);
+		var slaves = [ 'slave' , 'slave' , 'slave' ].map(function( name , i ) {
+			return new CoolMOJO( name + i );
 		});
 
-		cool.when( 'stuffHappens3' , function( e ) {
-			console.log(e.type);
+		master.once( 'stuff stuff2' , function( e ) {
+			console.log('master stuff');
 		});
 
-		cool.happen( 'stuffHappens1 stuffHappens2 stuffHappens3' );
-		cool.happen( 'stuffHappens1 stuffHappens2 stuffHappens3' );
+		slaves.forEach(function( slave ) {
+			master.once( 'stuff stuff2' , function( e ) {
+				console.log(slave.name + ' ' + e.type);
+			});
+		});
+
+		console.log(master);
+		console.log(slaves);
+
+		master.happen( 'stuff' );
+		master.happen( 'stuff' );
 	}
 
 

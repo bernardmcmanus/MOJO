@@ -6,6 +6,7 @@ _MOJO.EventHandler = (function() {
 		var that = this;
 
 		that.handler = func;
+		that.active = true;
 		that.callback = function() {};
 
 		that.args = (function( args ) {
@@ -18,11 +19,18 @@ _MOJO.EventHandler = (function() {
 	EventHandler.prototype = {
 
 		invoke: function( event , args ) {
+			
 			var that = this;
+
+			if (!that.active) {
+				return;
+			}
+
 			var Args = that.args.concat( args || [] );
+			var handler = that.handler;
 			Args.unshift( event );
-			that.handler.apply( null , Args );
-			that.callback( event , that.handler );
+			handler.apply( null , Args );
+			that.callback( event , handler );
 		}
 	};
 

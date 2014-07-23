@@ -9,8 +9,8 @@ _MOJO.When = (function( EventHandler , Event ) {
             var handlers = that.when.apply( that , arguments );
             
             handlers.forEach(function( eventHandler ) {
-                eventHandler.callback = function( e , handlerFunc ) {
-                    that.dispel( e.type , handlerFunc );
+                eventHandler.callback = function() {
+                    this.active = false;
                 };
             });
         },
@@ -39,20 +39,14 @@ _MOJO.When = (function( EventHandler , Event ) {
             var that = this;
             var getHandlers = that._getHandlers.bind( that );
 
-            function handlerExists( eventType , eventHandler ) {
-                var handlerArray = getHandlers( eventType );
-                return handlerArray.indexOf( eventHandler ) >= 0;
-            }
-
             eachEventType( eventType , function( type ) {
 
                 var handlers = getHandlers( type );
                 var event = new Event( that , type );
 
-                handlers.forEach(function( eventHandler ) {
-                    if (handlerExists( type , eventHandler )) {
-                        eventHandler.invoke( event , args );
-                    }
+                that.handlers[eventType] = handlers.filter(function( eventHandler ) {
+                    eventHandler.invoke( event , args );
+                    return eventHandler.active;
                 });
             });
         },
