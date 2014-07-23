@@ -4,7 +4,46 @@
 	//var MOJO = require( '../mojo-0.1.2.js' );
 
 
-	onceTest();
+	dispelTest();
+
+
+	function dispelTest() {
+
+		function CoolMOJO( name ) {
+			this.name = name;
+			this.isCool = true;
+			MOJO.Construct( this );
+		}
+
+		CoolMOJO.prototype = MOJO.Create({
+
+			test: function() {
+				console.log(this);
+			}
+		});
+
+		var master = new CoolMOJO( 'master' );
+
+		var slaves = [ 'slave' , 'slave' , 'slave' ].map(function( name , i ) {
+			return new CoolMOJO( name + i );
+		});
+
+		master.once( 'stuff stuff2' , function( e ) {
+			//console.log('master stuff');
+		});
+
+		slaves.forEach(function( slave ) {
+			master.once( 'stuff stuff2' , function( e ) {
+				//console.log(slave.name + ' ' + e.type);
+			});
+		});
+
+		console.log(master);
+		console.log(slaves);
+
+		master.happen( 'stuff stuff2' );
+		master.happen( 'stuff' );
+	}
 
 
 	function onceTest() {

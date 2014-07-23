@@ -27,10 +27,10 @@ _MOJO.EventHandler = (function() {
 			}
 
 			var Args = that.args.concat( args || [] );
-			var handler = that.handler;
+			var handlerFunc = that.handler;
 			Args.unshift( event );
-			handler.apply( null , Args );
-			that.callback( event , handler );
+			handlerFunc.apply( null , Args );
+			that.callback( event , handlerFunc );
 		}
 	};
 

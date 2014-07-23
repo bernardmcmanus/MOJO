@@ -44,9 +44,13 @@ _MOJO.When = (function( EventHandler , Event ) {
                 var handlers = getHandlers( type );
                 var event = new Event( that , type );
 
-                that.handlers[eventType] = handlers.filter(function( eventHandler ) {
+                var inactive = handlers.filter(function( eventHandler ) {
                     eventHandler.invoke( event , args );
-                    return eventHandler.active;
+                    return !eventHandler.active;
+                });
+
+                inactive.forEach(function( eventHandler ) {
+                    that._removeHandler( handlers , eventHandler.handler );
                 });
             });
         },
