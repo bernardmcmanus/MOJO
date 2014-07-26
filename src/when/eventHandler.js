@@ -21,13 +21,13 @@ _MOJO.EventHandler = (function() {
 		invoke: function( event , args ) {
 			
 			var that = this;
+			var handlerFunc = that.handler;
 
-			if (!that.active) {
+			if (!that.active || event.isBreak || event.shouldSkip( handlerFunc )) {
 				return;
 			}
 
-			var Args = that.args.concat( args || [] );
-			var handlerFunc = that.handler;
+			var Args = that.args.concat( args !== undefined ? args : [] );
 			Args.unshift( event );
 			handlerFunc.apply( null , Args );
 			that.callback( event , handlerFunc );

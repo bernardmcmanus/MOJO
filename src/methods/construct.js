@@ -22,11 +22,11 @@ MOJO.Construct = (function() {
                 return Object.keys( subject );
             }),
 
-            values: createDescriptor(function() {
+            /*values: createDescriptor(function() {
                 return subject.keys.map(function( key ) {
                     return subject[key];
                 });
-            }),
+            }),*/
 
             length: createDescriptor(function() {
                 return subject.keys.length;

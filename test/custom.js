@@ -1,10 +1,10 @@
 (function() {
 
 
-	//var MOJO = require( '../mojo-0.1.2.js' );
+	//var MOJO = require( '../mojo-0.1.3.js' );
 
 
-	dispelTest();
+	instanceTest();
 
 
 	function dispelTest() {
@@ -29,20 +29,22 @@
 		});
 
 		master.once( 'stuff stuff2' , function( e ) {
-			//console.log('master stuff');
+			console.log('master ' + e.type);
+			master.dispel( 'stuff2' );
 		});
 
 		slaves.forEach(function( slave ) {
 			master.once( 'stuff stuff2' , function( e ) {
-				//console.log(slave.name + ' ' + e.type);
+				console.log(slave.name + ' ' + e.type);
 			});
 		});
 
 		console.log(master);
 		console.log(slaves);
 
-		master.happen( 'stuff stuff2' );
 		master.happen( 'stuff' );
+		console.log('----- happen stuff2 -----');
+		master.happen( 'stuff2' );
 	}
 
 
@@ -68,7 +70,7 @@
 		});
 
 		master.once( 'stuff stuff2' , function( e ) {
-			console.log('master stuff');
+			console.log('master ' + e.type);
 		});
 
 		slaves.forEach(function( slave ) {
@@ -81,7 +83,8 @@
 		console.log(slaves);
 
 		master.happen( 'stuff' );
-		master.happen( 'stuff' );
+		console.log('----- happen again -----');
+		master.happen( 'stuff stuff2' );
 	}
 
 
@@ -145,20 +148,30 @@
 		function stuffHappens1( e ) {
 			console.log('stuffHappens1');
 			cool1.dispel( 'stuffHappens' , stuffHappens2 );
+			//e.skip( stuffHappens2 );
 		}
 
 		function stuffHappens2( e ) {
+			// even though this function was dispelled in
+			// stuffHappens1, it should still run because
+			// the event had already been triggered
+			// -----
+			// if e.skip( stuffHappens2 ) is called in
+			// stuffHappens1, this shouldn't run
 			console.log('stuffHappens2');
 		}
 
 		function stuffHappens3( e ) {
 			console.log('stuffHappens3');
 			// this dispel call shouldn't do anything
-			// because the handler was already removed
+			// because the listener was already removed
 			cool1.dispel( 'stuffHappens' , stuffHappens2 );
+			e.break();
 		}
 
 		function stuffHappens4( e ) {
+			// this function shouldn't run because e.break
+			// was called in stuffHappens3
 			console.log('stuffHappens4');
 		}
 
@@ -168,6 +181,28 @@
 		cool1.when( 'stuffHappens' , stuffHappens4 );
 
 		cool1.happen( 'stuffHappens' );
+		console.log('----- happen again -----');
+		cool1.happen( 'stuffHappens' );
+	}
+
+
+	function jqueryEventTest() {
+
+		$(window).on( 'testEvent' , func1 );
+		$(window).on( 'testEvent' , func2 );
+
+		function func1( e ) {
+			console.log('func1');
+			$(window).off( 'testEvent' , func2 );
+		}
+
+		function func2( e ) {
+			// func2 is still run when the listener is
+			// removed after the event is triggered.
+			console.log('func2');
+		}
+
+		$(window).trigger( 'testEvent' );
 	}
 
 

@@ -16,9 +16,9 @@ MOJO.Extend = (function() {
                 if(value !== undefined){
                     if(value !== null && typeof(value) == 'object' && !value.nodeType ){
                         if( value instanceof Array){
-                            destination[key] = this.extend([], value);
+                            destination[key] = Extend([], value);
                         }else{
-                            destination[key] = this.extend({}, value);
+                            destination[key] = Extend({}, value);
                         }
                     }else{
                         destination[key] = value; 

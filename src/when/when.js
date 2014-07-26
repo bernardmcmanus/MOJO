@@ -37,20 +37,19 @@ _MOJO.When = (function( EventHandler , Event ) {
         happen: function( eventType , args ) {
 
             var that = this;
-            var getHandlers = that._getHandlers.bind( that );
 
             eachEventType( eventType , function( type ) {
 
-                var handlers = getHandlers( type );
+                var handlers = that._getHandlers( type , true );
                 var event = new Event( that , type );
 
-                var inactive = handlers.filter(function( eventHandler ) {
+                handlers
+                .filter(function( eventHandler ) {
                     eventHandler.invoke( event , args );
                     return !eventHandler.active;
-                });
-
-                inactive.forEach(function( eventHandler ) {
-                    that._removeHandler( handlers , eventHandler.handler );
+                })
+                .forEach(function( eventHandler ) {
+                    that._removeHandler( that._getHandlers( type ) , eventHandler.handler );
                 });
             });
         },
@@ -58,30 +57,30 @@ _MOJO.When = (function( EventHandler , Event ) {
         dispel: function( eventType , handlerFunc ) {
 
             var that = this;
-            var getHandlers = that._getHandlers.bind( that );
+            var handlers = that._getHandlers();
+
+            eventType = eventType || Object.keys( handlers ).join( ' ' );
 
             eachEventType( eventType , function( type ) {
                 if (handlerFunc) {
-                    that._removeHandler(
-                        getHandlers( type ) , handlerFunc
-                    );
+                    that._removeHandler( handlers[type] , handlerFunc );
                 }
                 else {
-                    delete getHandlers()[type];
+                    delete handlers[type];
                 }
             });
         },
 
-        _getHandlers: function( eventType ) {
+        _getHandlers: function( eventType , snapshot ) {
             var that = this;
             var handlers = (that.handlers = that.handlers || {});
-            return (eventType ? (handlers[eventType] || []) : handlers);
+            var response = (eventType ? (handlers[eventType] = handlers[eventType] || []) : handlers);
+            return (snapshot ? (eventType ? response.slice() : Object.create( response )) : response);
         },
 
         _addHandler: function( eventType , handlerFunc ) {
             var that = this;
-            var handlers = (that.handlers = that.handlers || {});
-            (handlers[eventType] = handlers[eventType] || []).push( handlerFunc );
+            that._getHandlers( eventType ).push( handlerFunc );
         },
 
         _removeHandler: function( handlerArray , handlerFunc ) {
