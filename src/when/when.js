@@ -107,7 +107,7 @@ _MOJO.When = (function( EventHandler , Event ) {
 
 
     function eachEventType( eventType , callback ) {
-        eventType.split( ' ' ).forEach( callback );
+        (eventType instanceof Array ? eventType : eventType.split( ' ' )).forEach( callback );
     }
 
     
