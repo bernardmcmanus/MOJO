@@ -29,7 +29,13 @@ MOJO.Construct = (function( Object , Shared ) {
 
             length: Descriptor(function() {
                 return Length( subject.keys );
-            })
+            }),
+
+            handleMOJO: {
+                value: (subject.handleMOJO || function() {}).bind( subject ),
+                configurable: true,
+                enumerable: false
+            }
         });
     }
 
