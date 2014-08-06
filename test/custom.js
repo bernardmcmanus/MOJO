@@ -1,10 +1,39 @@
 (function() {
 
 
-	//var MOJO = require( '../mojo-0.1.3.js' );
+	//var MOJO = require( '../mojo-0.1.4.js' );
 
 
-	instanceTest();
+	handleMOJOTest();
+
+
+	function handleMOJOTest() {
+
+        function CoolMOJO( name ) {
+            this.name = name;
+            this.isCool = true;
+            MOJO.Construct( this );
+            this.when( 'stuffHappens' , this );
+        }
+
+        CoolMOJO.prototype = MOJO.Create({
+
+            handleMOJO: function( e ) {
+                
+                console.log('handleMOJO');
+                console.log(e);
+
+                this.dispel( 'stuffHappens' , this );
+            }
+        });
+
+        var cool1 = new CoolMOJO( 'cool1' );
+
+        //console.log(cool1);
+
+        cool1.happen( 'stuffHappens' );
+        cool1.happen( 'stuffHappens' );
+    }
 
 
 	function dispelTest() {

@@ -1,18 +1,19 @@
-_MOJO.EventHandler = (function() {
+_MOJO.EventHandler = (function( Shared ) {
 
 
-	function EventHandler( func , args ) {
+	var EnsureArray = Shared.ensureArray;
+
+
+	function EventHandler( handler , context , args ) {
 
 		var that = this;
 
-		that.handler = func;
+		that.handler = handler;
+		that.context = context;
 		that.active = true;
 		that.callback = function() {};
 
-		that.args = (function( args ) {
-			args = (args !== undefined ? args : []);
-			return (args instanceof Array ? args : [ args ]);
-		}( args ));
+		that.args = EnsureArray( args );
 	}
 
 
@@ -27,9 +28,12 @@ _MOJO.EventHandler = (function() {
 				return;
 			}
 
-			var Args = that.args.concat( args !== undefined ? args : [] );
+			var Args = that.args.concat(
+				EnsureArray( args )
+			);
+
 			Args.unshift( event );
-			handlerFunc.apply( null , Args );
+			handlerFunc.apply( that.context , Args );
 			that.callback( event , handlerFunc );
 		}
 	};
@@ -38,7 +42,7 @@ _MOJO.EventHandler = (function() {
 	return EventHandler;
 
 	
-}());
+}( _MOJO.Shared ));
 
 
 

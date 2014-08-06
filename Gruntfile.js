@@ -3,6 +3,7 @@ module.exports = function( grunt ) {
 
 	var src = [
 		'src/namespace.js',
+		'src/shared/shared.js',
 		'src/when/eventHandler.js',
 		'src/when/mojoEvent.js',
 		'src/when/when.js',
@@ -200,3 +201,20 @@ module.exports = function( grunt ) {
 		'watch:debugProd'
 	]);
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

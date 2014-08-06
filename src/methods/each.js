@@ -1,9 +1,9 @@
-MOJO.Each = (function() {
+MOJO.Each = (function( Keys ) {
 
 
     function Each( subject , iterator , keys ) {
 
-        (keys || Object.keys( subject )).forEach(function( key , i ) {
+        (keys || Keys( subject )).forEach(function( key , i ) {
             iterator( subject[key] , key , i );
         });
     }
@@ -12,7 +12,7 @@ MOJO.Each = (function() {
     return Each;
 
     
-}());
+}( _MOJO.Shared.keys ));
 
 
 

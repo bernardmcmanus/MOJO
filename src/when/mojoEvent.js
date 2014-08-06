@@ -1,12 +1,15 @@
 _MOJO.Event = (function() {
 
 
+	var T = true;
+	var F = false;
+
+
 	function Event( target , type ) {
 		var that = this;
-		var f = false;
-		that.isBreak = f;
-		that.cancelBubble = f;
-		that.defaultPrevented = f;
+		that.isBreak = F;
+		that.cancelBubble = F;
+		that.defaultPrevented = F;
 		that.skipHandlers = [];
 		that.target = target;
 		that.type = type;
@@ -25,15 +28,15 @@ _MOJO.Event = (function() {
 		},
 
 		break: function() {
-			this.isBreak = true;
+			this.isBreak = T;
 		},
 
 		preventDefault: function() {
-			this.defaultPrevented = true;
+			this.defaultPrevented = T;
 		},
 
 		stopPropagation: function() {
-			this.cancelBubble = true;
+			this.cancelBubble = T;
 		}
 	};
 

@@ -1,4 +1,4 @@
-MOJO.Construct = (function() {
+MOJO.Construct = (function( Object , Shared ) {
 
 
     /*
@@ -8,45 +8,36 @@ MOJO.Construct = (function() {
     */
 
 
+    var Keys = Shared.keys;
+    var Descriptor = Shared.descriptor;
+    var Length = Shared.length;
+
+
     function Construct( subject ) {
 
         var handlers = {};
 
         Object.defineProperties( subject , {
 
-            handlers: createDescriptor(function() {
+            handlers: Descriptor(function() {
                 return handlers;
             }),
 
-            keys: createDescriptor(function() {
-                return Object.keys( subject );
+            keys: Descriptor(function() {
+                return Keys( subject );
             }),
 
-            /*values: createDescriptor(function() {
-                return subject.keys.map(function( key ) {
-                    return subject[key];
-                });
-            }),*/
-
-            length: createDescriptor(function() {
-                return subject.keys.length;
+            length: Descriptor(function() {
+                return Length( subject.keys );
             })
         });
-    }
-
-
-    function createDescriptor( getter ) {
-        return {
-            get: getter,
-            configurable: true
-        };
     }
 
 
     return Construct;
 
     
-}());
+}( Object , _MOJO.Shared ));
 
 
 

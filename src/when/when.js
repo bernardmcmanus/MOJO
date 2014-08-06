@@ -1,4 +1,13 @@
-_MOJO.When = (function( EventHandler , Event ) {
+_MOJO.When = (function( Object , Array , Shared , EventHandler , Event ) {
+
+
+    var HANDLE_MOJO = 'handleMOJO';
+
+
+    var Keys = Shared.keys;
+    var Shift = Shared.shift;
+    var EnsureArray = Shared.ensureArray;
+    var Length = Shared.length;
 
 
     return {
@@ -19,14 +28,17 @@ _MOJO.When = (function( EventHandler , Event ) {
 
             var that = this;
             var args = arguments;
-            var eventType = shift( args );
-            var bindArgs = args.length > 1 ? shift( args ) : bindArgs;
-            var handlerFunc = shift( args );
+            var eventType = Shift( args );
+            var bindArgs = Length( args ) > 1 ? Shift( args ) : bindArgs;
             var eventHandlers = [];
+
+            var MOJOHandler = Shift( args );
+            var handlerFunc = getHandlerFunc( MOJOHandler );
+            var context = getHandlerContext( MOJOHandler , handlerFunc );
 
             eachEventType( eventType , function( type , i ) {
                 eventHandlers.push(
-                    new EventHandler( handlerFunc , bindArgs )
+                    new EventHandler( handlerFunc , context , bindArgs )
                 );
                 that._addHandler( type , eventHandlers[i] );
             });
@@ -37,6 +49,8 @@ _MOJO.When = (function( EventHandler , Event ) {
         happen: function( eventType , args ) {
 
             var that = this;
+
+            eventType = that._ensureEType( eventType );
 
             eachEventType( eventType , function( type ) {
 
@@ -54,12 +68,13 @@ _MOJO.When = (function( EventHandler , Event ) {
             });
         },
 
-        dispel: function( eventType , handlerFunc ) {
+        dispel: function( eventType , MOJOHandler ) {
 
             var that = this;
             var handlers = that._getHandlers();
+            var handlerFunc = getHandlerFunc( MOJOHandler );
 
-            eventType = eventType || Object.keys( handlers ).join( ' ' );
+            eventType = that._ensureEType( eventType );
 
             eachEventType( eventType , function( type ) {
                 if (handlerFunc) {
@@ -69,6 +84,10 @@ _MOJO.When = (function( EventHandler , Event ) {
                     delete handlers[type];
                 }
             });
+        },
+
+        _ensureEType: function( eventType ) {
+            return eventType || Keys( this._getHandlers() ).join( ' ' );
         },
 
         _getHandlers: function( eventType , snapshot ) {
@@ -93,7 +112,7 @@ _MOJO.When = (function( EventHandler , Event ) {
 
 
     function indexOfHandler( handlerArray , handlerFunc ) {
-        return handlerArray
+        return EnsureArray( handlerArray )
             .map(function( eventHandler ) {
                 return eventHandler.handler;
             })
@@ -101,17 +120,28 @@ _MOJO.When = (function( EventHandler , Event ) {
     }
 
 
-    function shift( subject ) {
-        return Array.prototype.shift.call( subject );
-    }
-
-
     function eachEventType( eventType , callback ) {
         (eventType instanceof Array ? eventType : eventType.split( ' ' )).forEach( callback );
     }
 
+
+    function getHandlerFunc( subject ) {
+        return (subject || {})[HANDLE_MOJO] ? subject[HANDLE_MOJO] : subject;
+    }
+
+
+    function getHandlerContext( subject , handler ) {
+        return subject === handler ? null : subject;
+    }
+
     
-}( _MOJO.EventHandler , _MOJO.Event ));
+}(
+    Object,
+    Array,
+    _MOJO.Shared,
+    _MOJO.EventHandler,
+    _MOJO.Event
+));
 
 
 

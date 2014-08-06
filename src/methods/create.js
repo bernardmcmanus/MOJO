@@ -1,4 +1,4 @@
-MOJO.Create = (function() {
+MOJO.Create = (function( Object , MOJO ) {
 
 
     function Create( proto ) {
@@ -16,7 +16,7 @@ MOJO.Create = (function() {
     return Create;
 
     
-}());
+}( Object , MOJO ));
 
 
 
