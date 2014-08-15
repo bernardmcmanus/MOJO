@@ -1,8 +1,15 @@
-_MOJO.Event = (function() {
+_MOJO.Event = (function( Date , _MOJO ) {
 
 
 	var T = true;
 	var F = false;
+
+
+	var Shared = _MOJO.Shared;
+
+
+	var EnsureArray = Shared.ensureArray;
+	var getHandlerFunc = Shared.getHandlerFunc;
 
 
 	function Event( target , type ) {
@@ -19,8 +26,13 @@ _MOJO.Event = (function() {
 
 	Event.prototype = {
 
-		skip: function( handler ) {
-			this.skipHandlers.push( handler );
+		skip: function( handlers ) {
+			var skipHandlers = this.skipHandlers;
+			EnsureArray( handlers ).forEach(function( handler ) {
+				skipHandlers.push(
+					getHandlerFunc( handler )
+				);
+			});
 		},
 
 		shouldSkip: function( handler ) {
@@ -44,7 +56,7 @@ _MOJO.Event = (function() {
 	return Event;
 
 	
-}());
+}( Date , _MOJO ));
 
 
 

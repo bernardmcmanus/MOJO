@@ -1,4 +1,4 @@
-MOJO.Construct = (function( Object , Shared ) {
+MOJO.Construct = (function( Object , _MOJO ) {
 
 
     /*
@@ -6,6 +6,9 @@ MOJO.Construct = (function( Object , Shared ) {
     **  MOJO.Construct( instance ) within your object's constructor
     **  to define key properties on the object's uppermost level
     */
+
+
+    var Shared = _MOJO.Shared;
 
 
     var Keys = Shared.keys;
@@ -33,8 +36,7 @@ MOJO.Construct = (function( Object , Shared ) {
 
             handleMOJO: {
                 value: (subject.handleMOJO || function() {}).bind( subject ),
-                configurable: true,
-                enumerable: false
+                configurable: true
             }
         });
     }
@@ -43,7 +45,7 @@ MOJO.Construct = (function( Object , Shared ) {
     return Construct;
 
     
-}( Object , _MOJO.Shared ));
+}( Object , _MOJO ));
 
 
 

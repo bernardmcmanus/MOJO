@@ -1,4 +1,10 @@
-MOJO.Each = (function( Keys ) {
+MOJO.Each = (function( _MOJO ) {
+
+
+    var Shared = _MOJO.Shared;
+
+
+    var Keys = Shared.keys;
 
 
     function Each( subject , iterator , keys ) {
@@ -12,7 +18,7 @@ MOJO.Each = (function( Keys ) {
     return Each;
 
     
-}( _MOJO.Shared.keys ));
+}( _MOJO ));
 
 
 

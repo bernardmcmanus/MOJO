@@ -1,4 +1,7 @@
-_MOJO.EventHandler = (function( Shared ) {
+_MOJO.EventHandler = (function( _MOJO ) {
+
+
+	var Shared = _MOJO.Shared;
 
 
 	var EnsureArray = Shared.ensureArray;
@@ -42,7 +45,7 @@ _MOJO.EventHandler = (function( Shared ) {
 	return EventHandler;
 
 	
-}( _MOJO.Shared ));
+}( _MOJO ));
 
 
 

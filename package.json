@@ -1,8 +1,8 @@
 {
     "name": "MOJO",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "description": "The Modern JavaScript Object",
-    "main": "mojo-0.1.4.min.js",
+    "main": "mojo-0.1.5.min.js",
     "devDependencies": {
         "grunt": "~0.4.2",
         "grunt-contrib-jshint": "~0.6.3",

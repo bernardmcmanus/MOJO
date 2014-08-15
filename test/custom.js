@@ -4,7 +4,40 @@
 	//var MOJO = require( '../mojo-0.1.4.js' );
 
 
-	handleMOJOTest();
+	EventSkipTest();
+
+
+	function EventSkipTest() {
+
+        function CoolMOJO( name ) {
+            this.name = name;
+            this.isCool = true;
+            MOJO.Construct( this );
+        }
+
+        CoolMOJO.prototype = MOJO.Create({
+
+            handleMOJO: function( e , skip ) {
+                
+                console.log('handleMOJO');
+                console.log(e);
+
+                if (skip) {
+                	e.skip( skip );
+                }
+            }
+        });
+
+        var cool1 = new CoolMOJO( 'cool1' );
+        var cool2 = new CoolMOJO( 'cool2' );
+        var cool3 = new CoolMOJO( 'cool2' );
+
+        cool1.when( 'stuffHappens' , [[ cool2 , cool3 ]] , cool1 );
+        cool1.when( 'stuffHappens' , cool2 );
+        cool1.when( 'stuffHappens' , cool3 );
+
+        cool1.happen( 'stuffHappens' );
+    }
 
 
 	function handleMOJOTest() {
@@ -29,7 +62,7 @@
 
         var cool1 = new CoolMOJO( 'cool1' );
 
-        //console.log(cool1);
+        console.log(cool1);
 
         cool1.happen( 'stuffHappens' );
         cool1.happen( 'stuffHappens' );

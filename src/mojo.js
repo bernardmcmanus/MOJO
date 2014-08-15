@@ -21,6 +21,7 @@ MOJO = (function( _MOJO ) {
 	MOJO_prototype.each = function( iterator ) {
 		var that = this;
 		MOJO.Each( that , iterator , that.keys );
+		return that;
 	};
 
 
@@ -28,7 +29,7 @@ MOJO = (function( _MOJO ) {
 		var that = this;
 		that[key] = value;
 		that.happen( 'set' , key );
-		return that[key];
+		return that;
 	};
 
 
@@ -36,6 +37,7 @@ MOJO = (function( _MOJO ) {
 		var that = this;
 		delete that[key];
 		that.happen( 'remove' , key );
+		return that;
 	};
 
 

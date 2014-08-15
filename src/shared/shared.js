@@ -2,6 +2,7 @@ _MOJO.Shared = (function( Object , Array ) {
 
 
     var UNDEFINED;
+    var HANDLE_MOJO = 'handleMOJO';
 
 
     function length( subject ) {
@@ -28,9 +29,13 @@ _MOJO.Shared = (function( Object , Array ) {
         return {
             get: getter,
             set: setter,
-            configurable: true,
-            enumerable: false
+            configurable: true
         };
+    }
+
+
+    function getHandlerFunc( subject ) {
+        return (subject || {})[HANDLE_MOJO] ? subject[HANDLE_MOJO] : subject;
     }
 
 
@@ -39,7 +44,8 @@ _MOJO.Shared = (function( Object , Array ) {
         keys: keys,
         shift: shift,
         ensureArray: ensureArray,
-        descriptor: descriptor
+        descriptor: descriptor,
+        getHandlerFunc: getHandlerFunc
     };
 
     
