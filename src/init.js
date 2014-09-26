@@ -7,4 +7,6 @@
         window.MOJO = MOJO;
     }
 
+    MOJO.__ready();
+
 }( MOJO ));

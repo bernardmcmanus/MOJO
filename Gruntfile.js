@@ -1,162 +1,117 @@
 module.exports = function( grunt ) {
 
 
-	var src = [
-		'src/namespace.js',
-		'src/shared/shared.js',
-		'src/when/eventHandler.js',
-		'src/when/mojoEvent.js',
-		'src/when/when.js',
-		'src/mojo.js',
-		'src/methods/each.js',
-		'src/methods/create.js',
-		'src/methods/construct.js',
-		'src/definition.js'
-	];
+    var exec = require( 'child_process' ).exec;
+    var util = require( 'util' );
 
 
-	grunt.initConfig({
-
-		pkg: grunt.file.readJSON( 'package.json' ),
-
-		'git-describe': {
-			'options': {
-				prop: 'git-version'
-			},
-			dist : {}
-		},
-
-		jshint : {
-			all : [ 'Gruntfile.js' ].concat( src )
-		},
-
-		clean : [ 'mojo-*.js' ],
-
-		replace: {
-
-			dev: {
-				options: {
-					patterns: [{
-						match : /(\.\.\/mojo\-)(.*?)(\.js)/,
-						replacement : '../mojo-<%= pkg.version %>.js'
-					}]
-				},
-				files: [{
-					src: 'test/index.html',
-					dest: 'test/index.html'
-				}]
-			},
-
-			debugProd: {
-				options: {
-					patterns: [{
-						match : /(\.\.\/mojo\-)(.*?)(\.js)/,
-						replacement : '../mojo-<%= pkg.version %>.min.js'
-					}]
-				},
-				files: [{
-					src: 'test/index.html',
-					dest: 'test/index.html'
-				}]
-			},
-
-			pkg: {
-				options: {
-					patterns: [{
-						match: /(\"main\")(.*?)(\")(.{1,}?)(\")/i,
-						replacement: '\"main\": \"mojo-<%= pkg.version %>.min.js\"'
-					}]
-				},
-				files: [{
-					src: 'package.json',
-					dest: 'package.json'
-				}]
-			},
-
-			bower: {
-				options: {
-					patterns: [
-						{
-							match: /(\"name\")(.*?)(\")(.{1,}?)(\")/i,
-							replacement: '\"name\": \"<%= pkg.name %>\"'
-						},
-						{
-							match: /(\"version\")(.*?)(\")(.{1,}?)(\")/i,
-							replacement: '\"version\": \"<%= pkg.version %>\"'
-						},
-						{
-							match: /(\"homepage\")(.*?)(\")(.{1,}?)(\")/i,
-							replacement: '\"homepage\": \"<%= pkg.repository.url %>\"'
-						},
-						{
-							match: /(\"description\")(.*?)(\")(.{1,}?)(\")/i,
-							replacement: '\"description\": \"<%= pkg.description %>\"'
-						},
-						{
-							match: /(\"main\")(.*?)(\")(.{1,}?)(\")/i,
-							replacement: '\"main\": \"mojo-<%= pkg.version %>.min.js\"'
-						}
-					]
-				},
-				files: [{
-					src: 'bower.json',
-					dest: 'bower.json'
-				}]
-			}
-		},
-
-		watch: {
-			dev: {
-				files: ([ 'package.json' ]).concat( src ),
-				tasks: [ 'dev' ]
-			},
-			debugProd: {
-				files: ([ 'package.json' ]).concat( src ),
-				tasks: [ 'default' ]
-			}
-		},
-
-		concat: {
-			options: {
-				banner : '/*! <%= pkg.name %> - <%= pkg.version %> - <%= pkg.author.name %> - <%= grunt.config.get( \'git-hash\' ) %> - <%= grunt.template.today("yyyy-mm-dd") %> */\n\n\n'
-			},
-			build: {
-				src: src,
-				dest: 'mojo-<%= pkg.version %>.js'
-			}
-		},
-
-		uglify: {
-			options: {
-				banner : '/*! <%= pkg.name %> - <%= pkg.version %> - <%= pkg.author.name %> - <%= grunt.config.get( \'git-hash\' ) %> - <%= grunt.template.today("yyyy-mm-dd") %> */\n'
-			},
-			release : {
-				files : {
-					'mojo-<%= pkg.version %>.min.js' : src
-				}
-			}
-		}
-	});
-
-	
-	[
-		'grunt-contrib-jshint',
-		'grunt-contrib-clean',
-		'grunt-git-describe',
-		'grunt-replace',
-		'grunt-contrib-concat',
-		'grunt-contrib-uglify',
-		'grunt-contrib-watch'
-	]
-	.forEach( grunt.loadNpmTasks );
+    var Build = [
+        'src/index.js',
+        'src/shared.js',
+        'src/inject.js',
+        'src/eventHandler.js',
+        'src/mojoEvent.js',
+        'src/when.js',
+        'src/create.js',
+        'src/construct.js',
+        'src/init.js'
+    ];
 
 
-	grunt.registerTask( 'createHash' , function() {
+    grunt.initConfig({
+
+        pkg: grunt.file.readJSON( 'package.json' ),
+
+        'git-describe': {
+            'options': {
+                prop: 'git-version'
+            },
+            dist: {}
+        },
+
+        jshint: {
+            all: [ 'Gruntfile.js' , 'src/**/*.js' ]
+        },
+
+        clean: [ '<%= pkg.name %>-*.js' ],
+
+        replace: [{
+            options: {
+                patterns: [
+                    {
+                        match: /(\"version\")(.*?)(\")(.{1,}?)(\")/i,
+                        replacement: '\"version\": \"<%= pkg.version %>\"'
+                    },
+                    {
+                        match: /(\"main\")(.*?)(\")(.{1,}?)(\")/i,
+                        replacement: '\"main\": \"<%= BUILD %>\"'
+                    }
+                ]
+            },
+            files: [
+                {
+                    src: 'package.json',
+                    dest: 'package.json'
+                },
+                {
+                    src: 'bower.json',
+                    dest: 'bower.json'
+                }
+            ]
+        }],
+
+        watch: {
+            debug: {
+                files: [ 'Gruntfile.js' , 'src/**/*.js' , 'test/*.js' ],
+                tasks: [ 'test' ]
+            },
+            debugProd: {
+                files: [ 'Gruntfile.js' , 'src/**/*.js' , 'test/*.js' ],
+                tasks: [ 'testProd' ]
+            }
+        },
+
+        concat: {
+            options: {
+                banner: '/*! <%= pkg.name %> - <%= pkg.version %> - <%= pkg.author.name %> - <%= grunt.config.get( \'git-branch\' ) %> - <%= grunt.config.get( \'git-hash\' ) %> - <%= grunt.template.today("yyyy-mm-dd") %> */\n\n\n'
+            },
+            build: {
+                src: Build,
+                dest: '<%= BUILD %>'
+            }
+        },
+
+        uglify: {
+            options: {
+                banner: '/*! <%= pkg.name %> - <%= pkg.version %> - <%= pkg.author.name %> - <%= grunt.config.get( \'git-branch\' ) %> - <%= grunt.config.get( \'git-hash\' ) %> - <%= grunt.template.today("yyyy-mm-dd") %> */\n'
+            },
+            release: {
+                files: {
+                    '<%= BUILD %>': Build
+                }
+            }
+        }
+    });
+
+    
+    [
+        'grunt-contrib-jshint',
+        'grunt-contrib-clean',
+        'grunt-git-describe',
+        'grunt-replace',
+        'grunt-contrib-concat',
+        'grunt-contrib-uglify',
+        'grunt-contrib-watch'
+    ]
+    .forEach( grunt.loadNpmTasks );
+
+
+    grunt.registerTask( 'getHash' , function() {
 
         grunt.task.requires( 'git-describe' );
 
         var rev = grunt.config.get( 'git-version' );
-        var matches = rev.match( /(\-{0,1})+([A-Za-z0-9]{7})+(\-{0,1})/ );
+        var matches = rev.match( /\-?([A-Za-z0-9]{7})\-?/ );
 
         var hash = matches
             .filter(function( match ) {
@@ -173,33 +128,85 @@ module.exports = function( grunt ) {
     });
 
 
-	grunt.registerTask( 'default' , [
-		'jshint',
-		'git-describe',
-		'createHash',
-		'clean',
-		'replace:pkg',
-		'replace:bower',
-		'uglify'
-	]);
+    grunt.registerTask( 'getBranch' , function() {
+        var done = this.async();
+        exec( 'git status' , function( err , stdout , stderr ) {
+            if (!err) {
+                var branch = stdout
+                    .split( '\n' )
+                    .shift()
+                    .replace( /on\sbranch\s/i , '' );
+                grunt.config.set( 'git-branch' , branch );
+            }
+            done();
+        });
+    });
 
-	grunt.registerTask( 'dev' , [
-		'jshint',
-		'clean',
-		'replace:dev',
-		'concat'
-	]);
 
-	grunt.registerTask( 'debug' , [
-		'dev',
-		'watch:dev'
-	]);
+    grunt.registerTask( 'setBuildName' , function() {
+        var name = grunt.config.get( 'pkg.name' );
+        var version = grunt.config.get( 'pkg.version' );
+        var ext = (/(dev|test|debug)$/).test( process.argv[2] ) ? '.js': '.min.js';
+        var build = name + '-' + version + ext;
+        grunt.config.set( 'BUILD' , build );
+    });
 
-	grunt.registerTask( 'debugProd' , [
-		'default',
-		'replace:debugProd',
-		'watch:debugProd'
-	]);
+
+    grunt.registerTask( 'runTests' , function() {
+        var done = this.async();
+        exec( 'npm test' , function( err , stdout , stderr ) {
+            util.puts( err ? err: stdout );
+            done();
+        });
+    });
+
+
+    grunt.registerTask( 'always' , [
+        'clean',
+        'jshint',
+        'git-describe',
+        'setBuildName',
+        'getHash',
+        'getBranch'
+    ]);
+
+
+    grunt.registerTask( 'default' , [
+        'always',
+        'replace',
+        'uglify'
+    ]);
+
+
+    grunt.registerTask( 'dev' , [
+        'always',
+        'concat'
+    ]);
+
+
+    grunt.registerTask( 'test' , [
+        'dev',
+        'replace',
+        'runTests'
+    ]);
+
+
+    grunt.registerTask( 'testProd' , [
+        'default',
+        'runTests'
+    ]);
+
+
+    grunt.registerTask( 'debug' , [
+        'test',
+        'watch:debug'
+    ]);
+
+
+    grunt.registerTask( 'debugProd' , [
+        'testProd',
+        'watch:debugProd'
+    ]);
 };
 
 

@@ -1,12 +1,12 @@
 {
     "name": "MOJO",
-    "version": "0.1.5",
+    "version": "0.2.0",
     "homepage": "https://github.com/elnarddogg/MOJO.git",
     "authors": [
         "Bernard McManus"
     ],
     "description": "The Modern JavaScript Object",
-    "main": "mojo-0.1.5.min.js",
+    "main": "mojo-0.2.0.min.js",
     "keywords": [
         "javascript",
         "object",

@@ -1,9 +1,15 @@
 {
-    "name": "MOJO",
-    "version": "0.1.5",
+    "name": "mojo",
+    "version": "0.2.0",
     "description": "The Modern JavaScript Object",
-    "main": "mojo-0.1.5.min.js",
+    "main": "mojo-0.2.0.min.js",
+    "scripts": {
+        "test": "mocha"
+    },
     "devDependencies": {
+        "mocha": ">=1.21.4",
+        "chai": ">=1.9.1",
+        "fs-extra": ">=0.9.1",
         "grunt": "~0.4.2",
         "grunt-contrib-jshint": "~0.6.3",
         "grunt-contrib-concat": ">=0.4.0",
