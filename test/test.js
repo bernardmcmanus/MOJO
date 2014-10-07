@@ -115,6 +115,24 @@
         });
     });
 
+    describe( 'EventHandler' , function() {
+        it( 'args should be unique to each event occurrence' , function( done ) {
+
+            function handlerFunc( e ) {
+                assert.equal( arguments.length , 1 , 'arguments.length should equal 1' );
+            }
+
+            var evt = new MOJO.Event( mojo , 'rad' );
+            var evtHandler = new MOJO.EventHandler( handlerFunc , mojo );
+
+            for (var i = 0; i < 10; i++) {
+                evtHandler.invoke( evt );
+            }
+
+            done();
+        });
+    });
+
     function async( callback ) {
         setTimeout( callback , 1 );
     }
