@@ -174,8 +174,7 @@ module.exports = function( grunt ) {
     grunt.registerTask( 'default' , [
         'always',
         'replace',
-        'uglify',
-        'runTests'
+        'uglify'
     ]);
 
 
@@ -193,7 +192,8 @@ module.exports = function( grunt ) {
 
 
     grunt.registerTask( 'testProd' , [
-        'default'
+        'default',
+        'runTests'
     ]);
 
 

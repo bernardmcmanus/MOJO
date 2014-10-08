@@ -13,13 +13,6 @@ function(
 ){
 
 
-    /*
-    **  When MOJO.create is used to create a prototype, call
-    **  MOJO.construct( instance ) within your object's constructor
-    **  to define key properties on the object's uppermost level
-    */
-
-
     function construct( subject ) {
 
         var handlers = {};
@@ -29,14 +22,6 @@ function(
             handlers: descriptor(function() {
                 return handlers;
             }),
-
-            /*keys: descriptor(function() {
-                return keys( subject );
-            }),
-
-            length: descriptor(function() {
-                return length( subject.keys );
-            }),*/
 
             handleMOJO: {
                 value: (subject.handleMOJO || function() {}).bind( subject ),

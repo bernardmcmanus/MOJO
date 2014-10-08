@@ -48,7 +48,7 @@ function(
 
     return {
 
-        once: function() {
+        $once: function() {
 
             var that = this;
             var eventHandlers = that.__when( arguments );
@@ -62,13 +62,13 @@ function(
             return that;
         },
 
-        when: function() {
+        $when: function() {
             var that = this;
             that.__when( arguments );
             return that;
         },
 
-        happen: function( eventType , args ) {
+        $emit: function( eventType , args ) {
 
             var that = this;
 
@@ -92,7 +92,7 @@ function(
             return that;
         },
 
-        dispel: function( eventType , MOJOHandler ) {
+        $dispel: function( eventType , MOJOHandler ) {
 
             var that = this;
             var handlers = that.__get();
@@ -127,10 +127,6 @@ function(
             return handlerArray;
         },
 
-        _ensureEType: function( eventType ) {
-            return eventType || keys( this.handlers );
-        },
-
         __get: function( eventType , snapshot ) {
             
             var that = this;
@@ -161,10 +157,13 @@ function(
             var that = this;
             var handlers = that.__get();
             var handlerArray = that.__get( type );
-            var index = indexOfHandler( handlerArray , func );
-            
-            if (index >= 0) {
-                handlerArray.splice( index , 1 );
+            var index = null;
+
+            while (index === null || index >= 0) {
+                if (index >= 0) {
+                    handlerArray.splice( index , 1 );
+                }
+                index = indexOfHandler( handlerArray , func );
             }
             
             if (!length( handlerArray ) || !func) {
@@ -173,6 +172,10 @@ function(
             else {
                 handlers[type] = handlerArray;
             }
+        },
+
+        _ensureEType: function( eventType ) {
+            return eventType || keys( this.handlers );
         }
     };
 });

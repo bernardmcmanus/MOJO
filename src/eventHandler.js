@@ -13,7 +13,7 @@ MOJO.EventHandler = MOJO.inject([ 'ensureArray' , 'PROTO' ] , function( ensureAr
 
         that.invoke = function( event , invArgs ) {
             
-            if (!that.active || event.isBreak || event.isSkip( func )) {
+            if (!that.active || event.isBreak) {
                 return;
             }
 
