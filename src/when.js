@@ -1,3 +1,5 @@
+/* jshint -W018 */
+
 MOJO.when = MOJO.inject(
 [
     'EventHandler',
@@ -10,7 +12,8 @@ MOJO.when = MOJO.inject(
     'length',
     'getHandlerFunc',
     'isArray',
-    'del'
+    'del',
+    'EVENTS'
 ],
 function(
     EventHandler,
@@ -23,14 +26,15 @@ function(
     length,
     getHandlerFunc,
     isArray,
-    del
+    del,
+    EVENTS
 ){
 
 
     function indexOfHandler( handlerArray , func ) {
         return ensureArray( handlerArray )
-            .map(function( eventHandler ) {
-                return eventHandler.func;
+            .map(function( evtHandler ) {
+                return evtHandler.func;
             })
             .indexOf( func );
     }
@@ -149,6 +153,11 @@ function(
             handlerArray.push( eventHandler );
             that.handlers[type] = handlerArray;
 
+            // emit $$listener.added event
+            if (!Event.isPrivate( type )) {
+                that.$emit( EVENTS.$when , type );
+            }
+
             return eventHandler;
         },
 
@@ -157,20 +166,27 @@ function(
             var that = this;
             var handlers = that.__get();
             var handlerArray = that.__get( type );
-            var index = null;
+            var i = 0, index, evtHandler;
 
-            while (index === null || index >= 0) {
-                if (index >= 0) {
+            while (i < length( handlerArray )) {
+                index = (func ? indexOfHandler( handlerArray , func ) : i);
+                if (index >= 0 && !handlerArray[index].locked) {
                     handlerArray.splice( index , 1 );
+                    i--;
                 }
-                index = indexOfHandler( handlerArray , func );
+                i++;
             }
             
-            if (!length( handlerArray ) || !func) {
+            if (!length( handlerArray )) {
                 del( handlers , type );
             }
             else {
                 handlers[type] = handlerArray;
+            }
+
+            // emit $$listener.removed event
+            if (!Event.isPrivate( type )) {
+                that.$emit( EVENTS.$dispel , type );
             }
         },
 

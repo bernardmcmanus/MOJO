@@ -1,4 +1,13 @@
-MOJO.EventHandler = MOJO.inject([ 'ensureArray' , 'PROTO' ] , function( ensureArray , PROTO ) {
+MOJO.EventHandler = MOJO.inject([
+    'defProp',
+    'ensureArray',
+    'PROTO'
+],
+function(
+    defProp,
+    ensureArray,
+    PROTO
+){
 
 
     function EventHandler( func , context , args ) {
@@ -11,9 +20,13 @@ MOJO.EventHandler = MOJO.inject([ 'ensureArray' , 'PROTO' ] , function( ensureAr
 
         args = ensureArray( args );
 
+        defProp( that , 'locked' , {
+            value: (context && context.__handleMOJO === func)
+        });
+
         that.invoke = function( event , invArgs ) {
             
-            if (!that.active || event.isBreak) {
+            if (!that.active) {
                 return;
             }
 

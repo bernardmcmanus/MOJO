@@ -45,6 +45,13 @@ MOJO.shared = (function( Object , Array ) {
 
         PROTO: PROTOTYPE,
 
+        EVENTS: {
+            set: '$$set',
+            unset: '$$unset',
+            $when: '$$listener.added',
+            $dispel: '$$listener.removed'
+        },
+
         ocreate: function( subject ) {
             return Object.create( subject );
         },

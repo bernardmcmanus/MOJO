@@ -1,6 +1,7 @@
 (function() {
     
 
+    var util = require( 'util' );
     var path = require( 'path' );
     var fs = require( 'fs-extra' );
     var chai = require( 'chai' );
@@ -14,6 +15,13 @@
     var MOJO = require(
         path.resolve( __dirname , ( '../' + pkg.main ))
     );
+
+    MOJO.log = function() {
+        arguments = Array.prototype.map.call( arguments , function( arg ) {
+            return util.inspect( arg , { depth: null , colors: true });
+        });
+        console.log.apply( null , arguments );
+    };
 
 
     var mojo = new MOJO();
@@ -30,6 +38,68 @@
         handleMOJO: function() {}
     });
 
+
+    describe( 'Private Events' , function() {
+
+        it( 'should not be removed when dispel is called' , function( done ) {
+            mojo.$dispel();
+            Object.keys( MOJO.shared.EVENTS ).forEach(function( key ) {
+                var type = MOJO.shared.EVENTS[key];
+                expect( mojo.handlers ).to.have.property( type );
+            });
+            done();
+        });
+        
+        describe( '$$listener' , function() {
+            
+            var events = [ 'gnarly' , 'rad' ];
+
+            describe( '.added' , function() {
+                it( 'should be triggered when an event listener is added' , function( done ) {
+                    mojo.$once( '$$listener.added' , function( e , type ) {
+                        expect( events ).to.include( type );
+                        expect( mojo.handlers ).to.have.property( type );
+                    });
+                    mojo.$when( events , Test );
+                    done();
+                });
+            });
+
+            describe( '.removed' , function() {
+                it( 'should be triggered when an event listener is removed' , function( done ) {
+                    mojo.$once( '$$listener.removed' , function( e , type ) {
+                        expect( events ).to.include( type );
+                        expect( mojo.handlers ).to.not.have.property( type );
+                    });
+                    mojo.$dispel( events , Test );
+                    done();
+                });
+            });
+        });
+
+        describe( '$$set' , function() {
+            it( 'should be triggered when .set is called' , function( done ) {
+                mojo.$once( '$$set' , function( e , key ) {
+                    expect( key ).to.equal( 'gnarly' );
+                    expect( mojo ).to.have.property( 'gnarly' );
+                    expect( mojo.gnarly ).to.equal( 'rad' );
+                });
+                mojo.set( 'gnarly' , 'rad' );
+                done();
+            });
+        });
+
+        describe( '$$unset' , function() {
+            it( 'should be triggered when .unset is called' , function( done ) {
+                mojo.$once( '$$unset' , function( e , key ) {
+                    expect( key ).to.equal( 'gnarly' );
+                    expect( mojo ).to.not.have.property( 'gnarly' );
+                });
+                mojo.unset( 'gnarly' );
+                done();
+            });
+        });
+    });
     
     describe( '#constructor' , function() {
         it( 'should create a new MOJO instance' , function( done ) {
@@ -137,6 +207,16 @@
             mojo.$dispel();
             expect( mojo.handlers ).to.not.have.property( 'gnarly' );
             expect( mojo.handlers ).to.not.have.property( 'rad' );
+            expect(
+                Object.keys( mojo.handlers ).length
+            )
+            .to
+            .equal(
+                Object.keys( MOJO.shared.EVENTS ).length
+            );
+            Object.keys( mojo.handlers ).forEach(function( key ) {
+                expect( mojo.handlers[key].length ).to.equal( 1 );
+            });
             done();
         });
         it( 'should remove all handlers matched by func when event type is falsy' , function( done ) {
@@ -197,6 +277,133 @@
         });
     });
 
+    describe( 'Event' , function() {
+        
+        var Event = MOJO.Event;
+        
+        describe( '.validate' , function() {
+            it( 'should validate the event string' , function( done ) {
+                assert.ok(
+                    Event.validate( 'type' )
+                );
+                assert.ok(
+                    Event.validate( '$$type' )
+                );
+                assert.ok(
+                    Event.validate( '$$type.namespace' )
+                );
+                assert.ok(
+                    Event.validate( '$$type.*' )
+                );
+                assert.ok(
+                    Event.validate( '*.namespace' )
+                );
+                assert.ok(
+                    Event.validate( 'type1' )
+                );
+                assert.ok(
+                    Event.validate( '1type' )
+                );
+                assert.ok(
+                    Event.validate( '1' )
+                );
+                assert.ok(
+                    Event.validate( 1 )
+                );
+                assert.notOk(
+                    Event.validate( '1.' )
+                );
+                assert.notOk(
+                    Event.validate( '1.*' )
+                );
+                assert.notOk(
+                    Event.validate( '*.namespace.' )
+                );
+                assert.notOk(
+                    Event.validate( '*.namespace.*' )
+                );
+                assert.notOk(
+                    Event.validate( 'ty$pe' )
+                );
+                assert.notOk(
+                    Event.validate( 'ty.*pe' )
+                );
+                assert.notOk(
+                    Event.validate( 'type.' )
+                );
+                assert.notOk(
+                    Event.validate( 'type$' )
+                );
+                assert.notOk(
+                    Event.validate( 'ty*pe' )
+                );
+                assert.notOk(
+                    Event.validate( 'type*' )
+                );
+                assert.notOk(
+                    Event.validate( 'type.*n' )
+                );
+                done();
+            });
+        });
+
+        describe( '.parse' , function() {
+            it( 'should return the event pieces' , function( done ) {
+                [
+                    {
+                        val: 'type',
+                        type: 'type',
+                        namespace: null
+                    },
+                    {
+                        val: '$$type',
+                        type: '$$type',
+                        namespace: null
+                    },
+                    {
+                        val: '$$type.namespace',
+                        type: '$$type',
+                        namespace: 'namespace'
+                    },
+                    {
+                        val: '$$type.*',
+                        type: '$$type',
+                        namespace: '*'
+                    },
+                    {
+                        val: '*.namespace',
+                        type: '*',
+                        namespace: 'namespace'
+                    },
+                    {
+                        val: 1,
+                        type: 1,
+                        namespace: null
+                    }
+                ]
+                .forEach(function( test ) {
+
+                    var parsed = Event.parse( test.val );
+                                        
+                    if (parsed.type) {
+                        assert.match( test.type , parsed.type , 'type regexp' );
+                    }
+                    else {
+                        assert.equal( parsed.type , test.type , 'null type' );
+                    }
+
+                    if (parsed.namespace) {
+                        assert.match( test.namespace , parsed.namespace , 'namespace regexp' );
+                    }
+                    else {
+                        assert.equal( parsed.namespace , test.namespace , 'null namespace' );
+                    }
+                });
+                done();
+            });
+        });
+    });
+
     describe( 'EventHandler' , function() {
         it( 'args should be unique to each event occurrence' , function( done ) {
 
@@ -210,7 +417,6 @@
             for (var i = 0; i < 10; i++) {
                 evtHandler.invoke( evt );
             }
-
             done();
         });
     });

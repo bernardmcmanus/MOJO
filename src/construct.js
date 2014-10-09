@@ -1,32 +1,46 @@
 MOJO.construct = MOJO.inject(
 [
-    Object,
     'keys',
+    'defProp',
     'descriptor',
-    'length'
+    'length',
+    'EVENTS'
 ],
 function(
-    Object,
     keys,
+    defProp,
     descriptor,
-    length
+    length,
+    EVENTS
 ){
+
+    var HANDLE_MOJO = 'handleMOJO';
+    var __HANDLE_MOJO = '__' + HANDLE_MOJO;
 
 
     function construct( subject ) {
 
         var handlers = {};
 
-        Object.defineProperties( subject , {
+        defProp( subject , 'handlers' , descriptor(function() {
+            return handlers;
+        }));
 
-            handlers: descriptor(function() {
-                return handlers;
-            }),
+        defProp( subject , __HANDLE_MOJO , {
+            value: subject[ __HANDLE_MOJO ].bind( subject )
+        });
 
-            handleMOJO: {
-                value: (subject.handleMOJO || function() {}).bind( subject ),
-                configurable: true
-            }
+        defProp( subject , HANDLE_MOJO , {
+            value: (subject[ HANDLE_MOJO ] || function() {}).bind( subject )
+        });
+
+        /*defProp( subject , 'bubbleRoute' , {
+            value: []
+        });*/
+
+        keys( EVENTS ).forEach(function( key ) {
+            var evt = EVENTS[key];
+            subject.__add( evt , subject[ __HANDLE_MOJO ] , subject );
         });
     }
 
