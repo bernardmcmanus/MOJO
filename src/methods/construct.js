@@ -22,9 +22,15 @@ MOJO.Construct = (function( Object , _MOJO ) {
 
         Object.defineProperties( subject , {
 
-            handlers: Descriptor(function() {
-                return handlers;
-            }),
+            handlers: {
+                get: function() {
+                    return handlers;
+                },
+                set: function( value ) {
+                    handlers = value;
+                },
+                configurable: true
+            },
 
             keys: Descriptor(function() {
                 return Keys( subject );
