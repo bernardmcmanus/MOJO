@@ -72,7 +72,7 @@ function(
             return that;
         },
 
-        $emit: function( eventType , args ) {
+        $emit: function( eventType , args , originalEvent ) {
 
             var that = this;
 
@@ -81,7 +81,7 @@ function(
             eachEventType( eventType , function( type ) {
 
                 var handlers = that.__get( type , true );
-                var event = new Event( that , type );
+                var event = originalEvent ? Event.clone( originalEvent , that ) : new Event( that , type );
 
                 handlers
                 .filter(function( evtHandler ) {
@@ -91,6 +91,11 @@ function(
                 .forEach(function( evtHandler ) {
                     that.__remove( type , evtHandler.func );
                 });
+
+                // emit $$listener.triggered event
+                if (!Event.isPrivate( type )) {
+                    that.$emit( EVENTS.$emit , [ type , event , args ]);
+                }
             });
 
             return that;
@@ -155,7 +160,7 @@ function(
 
             // emit $$listener.added event
             if (!Event.isPrivate( type )) {
-                that.$emit( EVENTS.$when , type );
+                that.$emit( EVENTS.$when , [ type , func , args ]);
             }
 
             return eventHandler;

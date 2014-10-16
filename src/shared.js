@@ -41,6 +41,11 @@ MOJO.shared = (function( Object , Array ) {
     }
 
 
+    function forEach( subject , callback ) {
+        return ensureArray( subject ).forEach( callback );
+    }
+
+
     return {
 
         PROTO: PROTOTYPE,
@@ -49,6 +54,7 @@ MOJO.shared = (function( Object , Array ) {
             set: '$$set',
             unset: '$$unset',
             $when: '$$listener.added',
+            $emit: '$$listener.triggered',
             $dispel: '$$listener.removed'
         },
 
@@ -81,6 +87,8 @@ MOJO.shared = (function( Object , Array ) {
         isArray: isArray,
 
         ensureArray: ensureArray,
+
+        forEach: forEach,
 
         descriptor: function( getter , setter ) {
             return {

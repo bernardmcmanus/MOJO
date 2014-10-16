@@ -14,7 +14,7 @@ module.exports = function( grunt ) {
         'src/when.js',
         'src/create.js',
         'src/construct.js',
-        'src/aggregate.js',
+        'src/migrate.js',
         'src/init.js'
     ];
 

@@ -1,4 +1,6 @@
 (function() {
+
+    'use strict';
     
 
     var util = require( 'util' );
@@ -17,10 +19,10 @@
     );
 
     MOJO.log = function() {
-        arguments = Array.prototype.map.call( arguments , function( arg ) {
+        var args = Array.prototype.map.call( arguments , function( arg ) {
             return util.inspect( arg , { depth: null , colors: true });
         });
-        console.log.apply( null , arguments );
+        console.log.apply( null , args );
     };
 
 
@@ -36,69 +38,6 @@
     GNARLY.prototype = MOJO.create({
         tubes: function() {},
         handleMOJO: function() {}
-    });
-
-
-    describe( 'Private Events' , function() {
-
-        it( 'should not be removed when dispel is called' , function( done ) {
-            mojo.$dispel();
-            Object.keys( MOJO.shared.EVENTS ).forEach(function( key ) {
-                var type = MOJO.shared.EVENTS[key];
-                expect( mojo.handlers ).to.have.property( type );
-            });
-            done();
-        });
-        
-        describe( '$$listener' , function() {
-            
-            var events = [ 'gnarly' , 'rad' ];
-
-            describe( '.added' , function() {
-                it( 'should be triggered when an event listener is added' , function( done ) {
-                    mojo.$once( '$$listener.added' , function( e , type ) {
-                        expect( events ).to.include( type );
-                        expect( mojo.handlers ).to.have.property( type );
-                    });
-                    mojo.$when( events , Test );
-                    done();
-                });
-            });
-
-            describe( '.removed' , function() {
-                it( 'should be triggered when an event listener is removed' , function( done ) {
-                    mojo.$once( '$$listener.removed' , function( e , type ) {
-                        expect( events ).to.include( type );
-                        expect( mojo.handlers ).to.not.have.property( type );
-                    });
-                    mojo.$dispel( events , Test );
-                    done();
-                });
-            });
-        });
-
-        describe( '$$set' , function() {
-            it( 'should be triggered when .set is called' , function( done ) {
-                mojo.$once( '$$set' , function( e , key ) {
-                    expect( key ).to.equal( 'gnarly' );
-                    expect( mojo ).to.have.property( 'gnarly' );
-                    expect( mojo.gnarly ).to.equal( 'rad' );
-                });
-                mojo.set( 'gnarly' , 'rad' );
-                done();
-            });
-        });
-
-        describe( '$$unset' , function() {
-            it( 'should be triggered when .unset is called' , function( done ) {
-                mojo.$once( '$$unset' , function( e , key ) {
-                    expect( key ).to.equal( 'gnarly' );
-                    expect( mojo ).to.not.have.property( 'gnarly' );
-                });
-                mojo.unset( 'gnarly' );
-                done();
-            });
-        });
     });
     
     describe( '#constructor' , function() {
@@ -255,7 +194,6 @@
         });
     });
 
-
     describe( 'MOJO.construct' , function() {
         it( 'should define required properties for an instance created with MOJO' , function( done ) {
             var gnarly = new GNARLY();
@@ -281,124 +219,26 @@
         
         var Event = MOJO.Event;
         
-        describe( '.validate' , function() {
-            it( 'should validate the event string' , function( done ) {
+        describe( '.isPrivate' , function() {
+            it( 'should determine whether an event string is designated as private' , function( done ) {
                 assert.ok(
-                    Event.validate( 'type' )
-                );
-                assert.ok(
-                    Event.validate( '$$type' )
+                    Event.isPrivate( '$$listener' )
                 );
                 assert.ok(
-                    Event.validate( '$$type.namespace' )
+                    Event.isPrivate( '$$listener.added' )
                 );
                 assert.ok(
-                    Event.validate( '$$type.*' )
+                    Event.isPrivate( '$$listener.removed' )
                 );
                 assert.ok(
-                    Event.validate( '*.namespace' )
+                    Event.isPrivate( '$$set' )
                 );
                 assert.ok(
-                    Event.validate( 'type1' )
-                );
-                assert.ok(
-                    Event.validate( '1type' )
-                );
-                assert.ok(
-                    Event.validate( '1' )
-                );
-                assert.ok(
-                    Event.validate( 1 )
+                    Event.isPrivate( '$$unset' )
                 );
                 assert.notOk(
-                    Event.validate( '1.' )
+                    Event.isPrivate( 'l$$istener' )
                 );
-                assert.notOk(
-                    Event.validate( '1.*' )
-                );
-                assert.notOk(
-                    Event.validate( '*.namespace.' )
-                );
-                assert.notOk(
-                    Event.validate( '*.namespace.*' )
-                );
-                assert.notOk(
-                    Event.validate( 'ty$pe' )
-                );
-                assert.notOk(
-                    Event.validate( 'ty.*pe' )
-                );
-                assert.notOk(
-                    Event.validate( 'type.' )
-                );
-                assert.notOk(
-                    Event.validate( 'type$' )
-                );
-                assert.notOk(
-                    Event.validate( 'ty*pe' )
-                );
-                assert.notOk(
-                    Event.validate( 'type*' )
-                );
-                assert.notOk(
-                    Event.validate( 'type.*n' )
-                );
-                done();
-            });
-        });
-
-        describe( '.parse' , function() {
-            it( 'should return the event pieces' , function( done ) {
-                [
-                    {
-                        val: 'type',
-                        type: 'type',
-                        namespace: null
-                    },
-                    {
-                        val: '$$type',
-                        type: '$$type',
-                        namespace: null
-                    },
-                    {
-                        val: '$$type.namespace',
-                        type: '$$type',
-                        namespace: 'namespace'
-                    },
-                    {
-                        val: '$$type.*',
-                        type: '$$type',
-                        namespace: '*'
-                    },
-                    {
-                        val: '*.namespace',
-                        type: '*',
-                        namespace: 'namespace'
-                    },
-                    {
-                        val: 1,
-                        type: 1,
-                        namespace: null
-                    }
-                ]
-                .forEach(function( test ) {
-
-                    var parsed = Event.parse( test.val );
-                                        
-                    if (parsed.type) {
-                        assert.match( test.type , parsed.type , 'type regexp' );
-                    }
-                    else {
-                        assert.equal( parsed.type , test.type , 'null type' );
-                    }
-
-                    if (parsed.namespace) {
-                        assert.match( test.namespace , parsed.namespace , 'namespace regexp' );
-                    }
-                    else {
-                        assert.equal( parsed.namespace , test.namespace , 'null namespace' );
-                    }
-                });
                 done();
             });
         });
@@ -418,6 +258,68 @@
                 evtHandler.invoke( evt );
             }
             done();
+        });
+    });
+
+    describe( 'Private Events' , function() {
+
+        it( 'should not be removed when dispel is called' , function( done ) {
+            mojo.$dispel();
+            Object.keys( MOJO.shared.EVENTS ).forEach(function( key ) {
+                var type = MOJO.shared.EVENTS[key];
+                expect( mojo.handlers ).to.have.property( type );
+            });
+            done();
+        });
+        
+        describe( '$$listener' , function() {
+            
+            var events = [ 'gnarly' , 'rad' ];
+
+            describe( '.added' , function() {
+                it( 'should be triggered when an event listener is added' , function( done ) {
+                    mojo.$once( '$$listener.added' , function( e , type ) {
+                        expect( events ).to.include( type );
+                        expect( mojo.handlers ).to.have.property( type );
+                    });
+                    mojo.$when( events , Test );
+                    done();
+                });
+            });
+
+            describe( '.removed' , function() {
+                it( 'should be triggered when an event listener is removed' , function( done ) {
+                    mojo.$once( '$$listener.removed' , function( e , type ) {
+                        expect( events ).to.include( type );
+                        expect( mojo.handlers ).to.not.have.property( type );
+                    });
+                    mojo.$dispel( events , Test );
+                    done();
+                });
+            });
+        });
+
+        describe( '$$set' , function() {
+            it( 'should be triggered when .set is called' , function( done ) {
+                mojo.$once( '$$set' , function( e , key ) {
+                    expect( key ).to.equal( 'gnarly' );
+                    expect( mojo ).to.have.property( 'gnarly' );
+                    expect( mojo.gnarly ).to.equal( 'rad' );
+                });
+                mojo.set( 'gnarly' , 'rad' );
+                done();
+            });
+        });
+
+        describe( '$$unset' , function() {
+            it( 'should be triggered when .unset is called' , function( done ) {
+                mojo.$once( '$$unset' , function( e , key ) {
+                    expect( key ).to.equal( 'gnarly' );
+                    expect( mojo ).to.not.have.property( 'gnarly' );
+                });
+                mojo.unset( 'gnarly' );
+                done();
+            });
         });
     });
 

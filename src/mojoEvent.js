@@ -20,6 +20,7 @@ function(
     function Event( target , type ) {
         var that = this;
         that.target = target;
+        that.currentTarget = target;
         that.type = type;
         that[CANCEL_BUBBLE] = false;
         that[DEFAULT_PREVENTED] = false;
@@ -27,59 +28,18 @@ function(
     }
 
 
-    Event.validate = function( str ) {
-        if (!str && str !== 0) {
-            return false;
-        }
-        return !(/((\b\$+)|\b\*|[^\w,\*]$|^[^a-z]+.\.|\.[^a-z]+.$|(\.\d|\d\.)|[^\*\.,\$,a-z].*[^a-z]|(\.|\*)(.+)(\.|\*)|(.\*\.|\.\*.)|[^\w,\$,\.,\*])/i).test( str );
-    };
-
-
-    Event.parse = function( str ) {
-        //var match = (/\.(?=(.*))/).exec( str );
-        //var match = str.match( /\.(.*)/ );
-        //var match = str.match( /\.(.*)/ );
-        //return match /*? (match[1] || null) : null*/;
-
-        /*var parts = str.replace( /./g , function( match ) {
-
-        }).split( '.' );*/
-
-        var parts = str
-            .toString()
-            .split( '.' )
-            .map(function( part ) {
-                return Event.escape( part );
-                /*return part.replace( /./g , function( match ) {
-                    MOJO.log(match);
-                    return Event.escape( match );
-                });*/
-            });
-
-        /*return {
-            type: parts[0],
-            namespace: parts[1] || null
-        };*/
-        return {
-            type: new RegExp( parts[0] ),
-            namespace: parts[1] ? new RegExp( parts[1] ) : null
-        };
-    };
-
-
-    Event.escape = function( str ) {
-        return str.replace( /\$|\*/g , function( match ) {
-            return '\\' + match;
+    Event.clone = function( originalEvent , currentTarget ) {
+        
+        var keys = Object.keys( originalEvent );
+        var event = Object.create( originalEvent );
+        
+        keys.forEach(function( key ) {
+            event[key] = originalEvent[key];
         });
-    };
+        
+        event.currentTarget = currentTarget;
 
-
-    Event.match = function( test , subject ) {
-        return ensureArray( subject )
-        .filter(function( str ) {
-            MOJO.log(test,str,test.test( str ));
-            return test.test( str );
-        });
+        return event;
     };
 
 
