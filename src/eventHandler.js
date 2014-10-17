@@ -1,43 +1,31 @@
-MOJO.EventHandler = MOJO.inject([
-    'defProp',
-    'ensureArray',
-    'PROTO'
-],
-function(
-    defProp,
-    ensureArray,
-    PROTO
-){
+MOJO.inject( 'EventHandler' , [ 'ensureArray' ] , function( ensureArray ) {
 
-
-    function EventHandler( func , context , args ) {
+    
+    function EventHandler( func , context , bindArgs ) {
 
         var that = this;
 
         that.func = func;
         that.active = true;
+        that.locked = false;
         that.callback = function() {};
 
-        args = ensureArray( args );
-
-        defProp( that , 'locked' , {
-            value: (context && context.__handleMOJO === func)
-        });
+        bindArgs = ensureArray( bindArgs );
 
         that.invoke = function( event , invArgs ) {
             
-            if (!that.active) {
+            if (!that.active || event.cancelBubble) {
                 return;
             }
 
-            var handlerArgs = args
+            var args = bindArgs
                 .slice( 0 )
                 .concat(
                     ensureArray( invArgs )
                 );
 
-            handlerArgs.unshift( event );
-            func.apply( context , handlerArgs );
+            args.unshift( event );
+            func.apply( context , args );
             that.callback( event , func );
         };
     }

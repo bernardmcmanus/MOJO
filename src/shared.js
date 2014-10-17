@@ -4,6 +4,7 @@ MOJO.shared = (function( Object , Array ) {
     var UNDEFINED;
     var PROTOTYPE = 'prototype';
     var HANDLE_MOJO = 'handleMOJO';
+    var $$LISTENER = '$$listener';
 
 
     function length( subject ) {
@@ -53,9 +54,9 @@ MOJO.shared = (function( Object , Array ) {
         EVENTS: {
             set: '$$set',
             unset: '$$unset',
-            $when: '$$listener.added',
-            $emit: '$$listener.triggered',
-            $dispel: '$$listener.removed'
+            $when: $$LISTENER + '.added',
+            $emit: $$LISTENER + '.triggered',
+            $dispel: $$LISTENER + '.removed'
         },
 
         ocreate: function( subject ) {
@@ -89,14 +90,6 @@ MOJO.shared = (function( Object , Array ) {
         ensureArray: ensureArray,
 
         forEach: forEach,
-
-        descriptor: function( getter , setter ) {
-            return {
-                get: getter,
-                set: setter,
-                configurable: true
-            };
-        },
 
         getHandlerFunc: function( subject ) {
             return (subject || {})[HANDLE_MOJO] ? subject[HANDLE_MOJO] : subject;

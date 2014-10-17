@@ -1,4 +1,4 @@
-MOJO.create = MOJO.inject(
+MOJO.inject( 'create' ,
 [
     MOJO,
     'ocreate',

@@ -12,9 +12,10 @@ MOJO.inject = (function( MOJO ) {
         var that = this;
         var args = arguments;
         var callback = pop( args );
-        var imports = pop( args );
+        var dependencies = pop( args );
+        var id = pop( args );
 
-        imports = imports.map(function( subject ) {
+        dependencies = dependencies.map(function( subject ) {
             
             var out;
 
@@ -33,7 +34,7 @@ MOJO.inject = (function( MOJO ) {
             return out;
         });
 
-        return callback.apply( null , imports );
+        MOJO[id] = callback.apply( null , dependencies );
     }
 
 

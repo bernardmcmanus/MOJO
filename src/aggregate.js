@@ -1,20 +1,45 @@
-MOJO.aggregate = MOJO.inject(
+MOJO.inject( 'aggregate' ,
 [
     MOJO,
-    'ensureArray',
+    'forEach',
+    'EVENTS'
 ],
 function(
     MOJO,
-    ensureArray
+    forEach,
+    EVENTS
 ){
 
     function aggregate( arr ) {
 
-        var aggregator = new MOJO();
+        var parent = new MOJO();
 
-        ensureArray( arr ).forEach(function() {
+        forEach( arr , function( child ) {
 
+            parent
+
+            .$when( EVENTS.$when , function( e , type , func , args ) {
+                child.$when( type , args , func );
+            })
+
+            .$when( EVENTS.$emit , function( e , type , originalEvent , args ) {
+                child.$emit( type , args , originalEvent );
+            })
+
+            .$when( EVENTS.$dispel , function( e , type , func ) {
+                child.$dispel( type , func );
+            })
+
+            .$when( EVENTS.$set , function( e , key ) {
+                child.set( key , parent[key] );
+            })
+
+            .$when( EVENTS.$unset , function( e , key ) {
+                child.unset( key );
+            });
         });
+
+        return parent;
     }
 
     return aggregate;

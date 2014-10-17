@@ -8,74 +8,94 @@ function MOJO( seed ) {
 
 MOJO.__ready = function() {
 
-    MOJO.inject(
-    [
+    MOJO.inject( 'prototype', [
         MOJO,
+        'Event',
         'when',
         'construct',
         'ocreate',
+        'shift',
+        'length',
         'del',
-        'EVENTS',
-        'PROTO'
+        'EVENTS'
     ],
     function(
         MOJO,
+        Event,
         when,
         construct,
         ocreate,
+        shift,
+        length,
         del,
-        EVENTS,
-        PROTO
+        EVENTS
     ){
 
-        var MOJO_prototype = (MOJO[ PROTO ] = ocreate( when ));
+        var proto = ocreate( when );
 
-        MOJO_prototype.__init = function( that , seed ) {
-
+        proto.__init = function( that , seed ) {
             for (var key in seed) {
                 that[key] = seed[key];
             }
-
             construct( that );
         };
 
-        MOJO_prototype.__handleMOJO = function( e ) {
+        proto.__handleMOJO = function() {
 
-            switch (e.type) {
+            var that = this;
+            var args = arguments;
+            var e = shift( args );
 
-                case EVENTS.$when:
-                    //MOJO.log(e.type,arguments[1]);
-                break;
-
-                case EVENTS.$dispel:
-                    //MOJO.log(e.type,arguments[1]);
-                break;
-
-                case EVENTS.set:
-                    //MOJO.log(e.type,arguments[1]);
-                break;
-
-                case EVENTS.unset:
-                    //MOJO.log(e.type,arguments[1]);
-                break;
-            }
+            /*if (Event.isPrivate( e.type )) {
+                that.$emit( Event.getPublic( e.type ) , args );
+            }*/
         };
 
-        MOJO_prototype.set = function( key , value ) {
+        proto.handleMOJO = function() {};
+
+        proto.$set = function( key , value ) {
             var that = this;
             that[key] = value;
             that.$emit( EVENTS.set , key );
             return that;
         };
 
-        MOJO_prototype.unset = function( key ) {
+        proto.$unset = function( key ) {
             var that = this;
             del( that , key );
             that.$emit( EVENTS.unset , key );
             return that;
         };
 
-        /*MOJO_prototype.spawn = function( instance ) {
+        proto.$subscribe = function( subscriber ) {
+
+        };
+
+        proto.$enq = function( task ) {
+            var that = this;
+            that.stack.push( task );
+        };
+
+        proto.$digest = function() {
+            
+            var that = this;
+            var stack = that.stack;
+
+            if (that.inprog) {
+                //MOJO.log('--- INPROG ---',stack.length);
+                return;
+            }
+
+            that.inprog = true;
+
+            while (length( stack ) > 0) {
+                shift( stack )();
+            }
+            
+            that.inprog = false;
+        };
+
+        /*proto.spawn = function( instance ) {
             
             instance = instance || {};
             instance = instance.handleMOJO ? instance : new MOJO( instance );
@@ -88,6 +108,8 @@ MOJO.__ready = function() {
         };*/
 
         del( MOJO , '__ready' );
+
+        return proto;
     });
 };
 

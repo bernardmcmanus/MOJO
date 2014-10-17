@@ -1,18 +1,24 @@
-MOJO.Event = MOJO.inject(
+MOJO.inject( 'Event' ,
 [
     Date,
-    'ensureArray',
+    'forEach',
     'getHandlerFunc',
+    'keys',
+    'ocreate',
     'PROTO'
 ],
 function(
     Date,
-    ensureArray,
+    forEach,
     getHandlerFunc,
+    keys,
+    ocreate,
     PROTO
 ){
 
 
+    var PRIVATE_REGEXP = /^\${2}/;
+    var CURRENT_TARGET = 'currentTarget';
     var CANCEL_BUBBLE = 'cancelBubble';
     var DEFAULT_PREVENTED = 'defaultPrevented';
 
@@ -20,8 +26,8 @@ function(
     function Event( target , type ) {
         var that = this;
         that.target = target;
-        that.currentTarget = target;
         that.type = type;
+        that[CURRENT_TARGET] = target;
         that[CANCEL_BUBBLE] = false;
         that[DEFAULT_PREVENTED] = false;
         that.timeStamp = Date.now();
@@ -30,21 +36,26 @@ function(
 
     Event.clone = function( originalEvent , currentTarget ) {
         
-        var keys = Object.keys( originalEvent );
-        var event = Object.create( originalEvent );
+        var evtKeys = keys( originalEvent );
+        var event = ocreate( originalEvent );
         
-        keys.forEach(function( key ) {
+        forEach( evtKeys , function( key ) {
             event[key] = originalEvent[key];
         });
         
-        event.currentTarget = currentTarget;
+        event[CURRENT_TARGET] = currentTarget;
 
         return event;
     };
-
+    
 
     Event.isPrivate = function( type ) {
-        return (/^\${2}/).test( type );
+        return PRIVATE_REGEXP.test( type );
+    };
+
+
+    Event.getPublic = function( type ) {
+        return type.replace( PRIVATE_REGEXP , '' );
     };
 
 

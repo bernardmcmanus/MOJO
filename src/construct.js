@@ -1,15 +1,13 @@
-MOJO.construct = MOJO.inject(
+MOJO.inject( 'construct' ,
 [
     'keys',
     'defProp',
-    'descriptor',
     'length',
     'EVENTS'
 ],
 function(
     keys,
     defProp,
-    descriptor,
     length,
     EVENTS
 ){
@@ -20,27 +18,37 @@ function(
 
     function construct( subject ) {
 
-        var handlers = {};
+        var inprog = false;
 
-        defProp( subject , 'handlers' , descriptor(function() {
-            return handlers;
-        }));
+        defProp( subject , 'inprog' , {
+            get: function() {
+                return inprog;
+            },
+            set: function( value ) {
+                inprog = value;
+            }
+        });
+
+        defProp( subject , 'handlers' , {
+            value: {}
+        });
+
+        defProp( subject , 'stack' , {
+            value: []
+        });
+
+        defProp( subject , HANDLE_MOJO , {
+            value: subject[ HANDLE_MOJO ].bind( subject )
+        });
 
         defProp( subject , __HANDLE_MOJO , {
             value: subject[ __HANDLE_MOJO ].bind( subject )
         });
 
-        defProp( subject , HANDLE_MOJO , {
-            value: (subject[ HANDLE_MOJO ] || function() {}).bind( subject )
-        });
-
-        /*defProp( subject , 'bubbleRoute' , {
-            value: []
-        });*/
-
         keys( EVENTS ).forEach(function( key ) {
             var evt = EVENTS[key];
-            subject.__add( evt , subject[ __HANDLE_MOJO ] , subject );
+            var evtHandler = subject.__add( evt , subject[ __HANDLE_MOJO ] , subject );
+            evtHandler.locked = true;
         });
     }
 

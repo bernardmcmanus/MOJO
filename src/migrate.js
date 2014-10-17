@@ -1,6 +1,6 @@
 (function( Object , MOJO ) {
 
-    var When = MOJO.when;
+    var when = MOJO.when;
 
     MOJO.Create = MOJO.create;
     MOJO.Construct = MOJO.construct;
@@ -10,9 +10,9 @@
         });
     };
 
-    When.when = When.$when;
-    When.once = When.$once;
-    When.happen = When.$emit;
-    When.dispel = When.$dispel;
+    when.when = when.$when;
+    when.once = when.$once;
+    when.happen = when.$emit;
+    when.dispel = when.$dispel;
 
 }( Object , MOJO ));

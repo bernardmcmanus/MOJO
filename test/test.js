@@ -39,6 +39,78 @@
         tubes: function() {},
         handleMOJO: function() {}
     });
+
+
+    describe( '$enq' , function() {
+
+        /*it( 'should $enq' , function( done ) {
+
+            mojo.$once( 'gnarly' , function( e ) {
+                mojo.$emit( 'rad' );
+                MOJO.log(e);
+            });
+
+            mojo.$once( 'rad' , function( e ) {
+                MOJO.log(e);
+            });
+
+            mojo.$emit( 'gnarly' );
+
+            //MOJO.log(mojo.handlers.gnarly);
+            //MOJO.log(mojo.handlers.rad);
+            MOJO.log(mojo.handlers);
+
+            done();
+        });
+
+        return;*/
+
+        it( 'should be publicized when emitted' , function( done ) {
+            mojo.$once([ '$$listener.added' , 'listener.added' ] , function( e ) {
+                MOJO.log(e);
+            });
+            mojo.$once( 'gnarly' , function(){} );
+            mojo.$emit( 'gnarly' );
+            // mojo.$dispel( null , null , true );
+            // MOJO.log(mojo.handlers);
+            done();
+        });
+    });
+
+
+    return;
+
+
+    /*describe( '#aggregate' , function() {
+        it( 'should aggregate mojos' , function( done ) {
+            
+            var mojos = [];
+
+            for (var i = 0; i < 10; i++) {
+                mojos.push(
+                    new MOJO({ name: 'mojo-' + i })
+                );
+            }
+
+            var aggregator = MOJO.aggregate( mojos );
+
+            aggregator.$when( 'gnarly' , function( e ) {
+                MOJO.log(e);
+            });
+
+            aggregator.$emit( 'gnarly' );
+
+            aggregator.$dispel( 'gnarly' );
+
+            aggregator.$emit( 'gnarly' );
+
+            //MOJO.log(mojos[4].handlers);
+
+            done();
+        });
+    });
+
+    return;*/
     
     describe( '#constructor' , function() {
         it( 'should create a new MOJO instance' , function( done ) {
@@ -123,7 +195,7 @@
         });
     });
 
-    describe( '#when' , function() {
+    describe( '$when' , function() {
         it( 'should add an event handler' , function( done ) {
             mojo.$when( 'gnarly' , Test );
             expect( mojo.handlers ).to.have.property( 'gnarly' );
@@ -132,7 +204,7 @@
         });
     });
 
-    describe( '#dispel' , function() {
+    describe( '$dispel' , function() {
         it( 'should remove an event handler' , function( done ) {
             mojo.$dispel( 'gnarly' , Test );
             expect( mojo.handlers ).to.not.have.property( 'gnarly' );
@@ -172,7 +244,7 @@
         });
     });
 
-    describe( '#once' , function() {
+    describe( '$once' , function() {
         it( 'should remove an event handler after it is executed' , function( done ) {
             mojo.$once( 'gnarly' , function(){
                 expect( mojo.handlers ).to.have.property( 'gnarly' );
@@ -186,7 +258,12 @@
     describe( 'MOJO.create' , function() {
         it( 'should create a new object that extends the MOJO prototype' , function( done ) {
             for (var key in MOJO.prototype) {
-                expect( GNARLY.prototype[key] ).to.equal( MOJO.prototype[key] );
+                if (key === 'handleMOJO') {
+                    expect( GNARLY.prototype[key] ).to.not.equal( MOJO.prototype[key] );
+                }
+                else {
+                    expect( GNARLY.prototype[key] ).to.equal( MOJO.prototype[key] );
+                }
             }
             expect( GNARLY.prototype ).to.include.keys( 'tubes' );
             expect( GNARLY.prototype ).to.include.keys( 'handleMOJO' );
@@ -231,6 +308,9 @@
                     Event.isPrivate( '$$listener.removed' )
                 );
                 assert.ok(
+                    Event.isPrivate( '$$listener.triggered' )
+                );
+                assert.ok(
                     Event.isPrivate( '$$set' )
                 );
                 assert.ok(
@@ -242,6 +322,24 @@
                 done();
             });
         });
+        /*describe( '.getPublic' , function() {
+            it( 'should publicize a private event string' , function( done ) {
+                [
+                    '$$listener',
+                    '$$listener.added',
+                    '$$listener.removed',
+                    '$$listener.triggered',
+                    '$$set',
+                    '$$unset'
+                ]
+                .forEach(function( str ) {
+                    var pub = Event.getPublic( str );
+                    var test = Array.prototype.slice.call( str , 2 ).join( '' );
+                    expect( pub ).to.equal( test );
+                });
+                done();
+            });
+        });*/
     });
 
     describe( 'EventHandler' , function() {
@@ -300,24 +398,24 @@
         });
 
         describe( '$$set' , function() {
-            it( 'should be triggered when .set is called' , function( done ) {
+            it( 'should be triggered when .$set is called' , function( done ) {
                 mojo.$once( '$$set' , function( e , key ) {
                     expect( key ).to.equal( 'gnarly' );
                     expect( mojo ).to.have.property( 'gnarly' );
                     expect( mojo.gnarly ).to.equal( 'rad' );
                 });
-                mojo.set( 'gnarly' , 'rad' );
+                mojo.$set( 'gnarly' , 'rad' );
                 done();
             });
         });
 
         describe( '$$unset' , function() {
-            it( 'should be triggered when .unset is called' , function( done ) {
+            it( 'should be triggered when .$unset is called' , function( done ) {
                 mojo.$once( '$$unset' , function( e , key ) {
                     expect( key ).to.equal( 'gnarly' );
                     expect( mojo ).to.not.have.property( 'gnarly' );
                 });
-                mojo.unset( 'gnarly' );
+                mojo.$unset( 'gnarly' );
                 done();
             });
         });

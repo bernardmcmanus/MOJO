@@ -10,11 +10,11 @@ module.exports = function( grunt ) {
         'src/shared.js',
         'src/inject.js',
         'src/eventHandler.js',
-        'src/mojoEvent.js',
+        'src/event.js',
         'src/when.js',
         'src/create.js',
         'src/construct.js',
-        'src/migrate.js',
+        'src/aggregate.js',
         'src/init.js'
     ];
 
