@@ -22,8 +22,18 @@ MOJO.shared = (function( Object , Array ) {
     }
 
 
-    function is( subject , type ) {
-        return typeof subject === type;
+    function slice( subject , start , end ) {
+        return Array[PROTOTYPE].slice.call( subject , start , end );
+    }
+
+
+    function is( subject , test ) {
+        if (typeof test === 'string') {
+            return typeof subject === test;
+        }
+        else {
+            return subject instanceof test;
+        }
     }
 
 
@@ -81,6 +91,8 @@ MOJO.shared = (function( Object , Array ) {
 
         pop: pop,
 
+        slice: slice,
+
         is: is,
 
         has: has,
@@ -90,6 +102,10 @@ MOJO.shared = (function( Object , Array ) {
         ensureArray: ensureArray,
 
         forEach: forEach,
+
+        ensureFunc: function( subject ) {
+            return subject || function() {};
+        },
 
         getHandlerFunc: function( subject ) {
             return (subject || {})[HANDLE_MOJO] ? subject[HANDLE_MOJO] : subject;

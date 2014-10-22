@@ -14,7 +14,7 @@ function(
 
         var parent = new MOJO();
 
-        forEach( arr , function( child ) {
+        /*forEach( arr , function( child ) {
 
             parent
 
@@ -37,7 +37,7 @@ function(
             .$when( EVENTS.$unset , function( e , key ) {
                 child.unset( key );
             });
-        });
+        });*/
 
         return parent;
     }

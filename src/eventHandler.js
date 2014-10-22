@@ -6,15 +6,15 @@ MOJO.inject( 'EventHandler' , [ 'ensureArray' ] , function( ensureArray ) {
         var that = this;
 
         that.func = func;
-        that.active = true;
         that.locked = false;
-        that.callback = function() {};
+        that.before = function() {};
+        that.after = function() {};
 
         bindArgs = ensureArray( bindArgs );
 
         that.invoke = function( event , invArgs ) {
             
-            if (!that.active || event.cancelBubble) {
+            if (event.cancelBubble) {
                 return;
             }
 
@@ -25,8 +25,9 @@ MOJO.inject( 'EventHandler' , [ 'ensureArray' ] , function( ensureArray ) {
                 );
 
             args.unshift( event );
+            that.before( event , func );
             func.apply( context , args );
-            that.callback( event , func );
+            that.after( event , func );
         };
     }
 

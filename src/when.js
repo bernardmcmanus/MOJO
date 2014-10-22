@@ -8,9 +8,12 @@ MOJO.inject( 'when' ,
     'shift',
     'pop',
     'ensureArray',
+    'forEach',
     'length',
+    'ensureFunc',
     'getHandlerFunc',
     'isArray',
+    'is',
     'del',
     'EVENTS'
 ],
@@ -22,9 +25,12 @@ function(
     shift,
     pop,
     ensureArray,
+    forEach,
     length,
+    ensureFunc,
     getHandlerFunc,
     isArray,
+    is,
     del,
     EVENTS
 ){
@@ -37,15 +43,22 @@ function(
             })
             .indexOf( func );
     }
-
-
-    function eachEventType( eventType , callback ) {
-        ensureArray( eventType ).forEach( callback );
-    }
     
 
     function getHandlerContext( handler , func ) {
         return handler === func ? null : handler;
+    }
+
+
+    function isLockedEvent( type ) {
+        var keys = Object.keys( EVENTS );
+        var pvt;
+        for (var i = 0; i < keys.length; i++) {
+            pvt = EVENTS[keys[i]];
+            if (pvt === type || Event.getPublic( pvt ) === type) {
+                return true;
+            }
+        }
     }
 
 
@@ -54,13 +67,17 @@ function(
         $once: function() {
 
             var that = this;
-            var eventHandlers = that.__when( arguments );
-            
-            eventHandlers.forEach(function( evtHandler ) {
-                evtHandler.callback = function() {
-                    this.active = false;
+
+            that.__when( arguments , function( evtHandler ) {
+                evtHandler.before = function( event , func ) {
+                    that.$enq(function() {
+                        that.__remove( event.type , func );
+                    });
+                    that.$digest();
                 };
             });
+
+            that.$digest();
 
             return that;
         },
@@ -68,6 +85,7 @@ function(
         $when: function() {
             var that = this;
             that.__when( arguments );
+            that.$digest();
             return that;
         },
 
@@ -75,46 +93,30 @@ function(
 
             var that = this;
 
-            eventType = that._ensureEType( eventType );
+            that.$enq(function() {
 
-            eachEventType( eventType , function( type ) {
+                eventType = that._ensureEType( eventType );
 
-                var handlers = that.__get( type , true );
-                var event = originalEvent ? Event.clone( originalEvent , that ) : new Event( that , type );
+                forEach( eventType , function( type ) {
 
-                /*handlers
-                .filter(function( evtHandler ) {
-                    evtHandler.invoke( event , args );
-                    return !evtHandler.active;
-                })
-                .forEach(function( evtHandler ) {
-                    that.__remove( type , evtHandler.func );
-                });*/
-
-                handlers.forEach(function( evtHandler ) {
-                    that.$enq(function() {
+                    var handlers = that.__get( type );
+                    var event = originalEvent ? Event.clone( originalEvent , that ) : new Event( that , type );
+                    
+                    forEach( handlers , function( evtHandler ) {
                         evtHandler.invoke( event , args );
                     });
+
+                    if (!isLockedEvent( type )) {
+                        that.$emit( EVENTS.$emit , [ type , [ type , event , args ]]);
+                    }
+
+                    /*if (!Event.isPrivate( type )) {
+                        that.$emit( EVENTS.$emit , [ type , event , args ]);
+                    }*/
                 });
-
-                that.$enq(function() {
-                    handlers.forEach(function( evtHandler ) {
-                        if (!evtHandler.active) {
-                            that.__remove( type , evtHandler.func );
-                        }
-                    });
-                });
-
-                // emit $$listener.triggered event
-                /*if (!Event.isPrivate( type )) {
-                    that.$emit( EVENTS.$emit , [ type , event , args ]);
-                }*/
-                if (!Event.isPrivate( type ) /*&& type !== Event.getPublic( EVENTS.$emit )*/) {
-                    that.$emit( EVENTS.$emit , [ type , event , args ]);
-                }
-
-                that.$digest();
             });
+
+            that.$digest();
 
             return that;
         },
@@ -122,51 +124,50 @@ function(
         $dispel: function( eventType , MOJOHandler , force ) {
 
             var that = this;
-            var handlers = that.__get();
             var func = getHandlerFunc( MOJOHandler );
 
-            eventType = that._ensureEType( eventType );
+            that.$enq(function() {
 
-            eachEventType( eventType , function( type ) {
-                if (force || !Event.isPrivate( type )) {
-                    that.__remove( type , func );
-                }
+                eventType = that._ensureEType( eventType );
+
+                forEach( eventType , function( type ) {
+                    if (force || !Event.isPrivate( type )) {
+                        that.__remove( type , func );
+                    }
+                });
             });
+
+            that.$digest();
 
             return that;
         },
 
-        __when: function( args ) {
+        /*args = [ eventType , [bindArgs] , [MOJOHandler] ]*/
+        __when: function( args , callback ) {
+
+            callback = ensureFunc( callback );
 
             var that = this;
             var eventType = shift( args );
-            var MOJOHandler = pop( args );
+            var MOJOHandler = is( args[0] , 'function' ) || is( args[0] , MOJO ) ? pop( args ) : that;
             var bindArgs = args[0];
             
-            var handlerArray = [];
             var func = getHandlerFunc( MOJOHandler );
             var context = getHandlerContext( MOJOHandler , func );
 
-            eachEventType( eventType , function( type , i ) {
-                handlerArray.push(
-                    that.__add( type , func , context , bindArgs )
-                );
+            that.$enq(function() {
+                forEach( eventType , function( type , i ) {
+                    callback(
+                        that.__add( type , func , context , bindArgs )
+                    );
+                });
             });
-            
-            return handlerArray;
         },
 
-        __get: function( eventType , snapshot ) {
-            
+        __get: function( eventType ) {
             var that = this;
             var handlers = that.handlers;
-            var response = (eventType ? ensureArray( handlers[eventType] ) : handlers);
-
-            if (snapshot) {
-                response = isArray( response ) ? response.slice( 0 ) : ocreate( response );
-            }
-
-            return response;
+            return (eventType ? ensureArray( handlers[eventType] ) : handlers);
         },
 
         __add: function( type , func , context , args ) {
@@ -182,9 +183,14 @@ function(
             /*if (!Event.isPrivate( type )) {
                 that.$emit( EVENTS.$when , [ type , func , args ]);
             }*/
-            if (!Event.isPrivate( type ) /*&& type !== Event.getPublic( EVENTS.$when )*/) {
+            
+            /*if (!Event.isPrivate( type )) {
                 that.$emit( EVENTS.$when , [ type , func , args ]);
+            }*/
+            if (!isLockedEvent( type )) {
+                that.$emit( EVENTS.$when , [ type , [ type , func , args ]]);
             }
+
             /*if (!Event.isPrivate( type ) && type !== Event.getPublic( EVENTS.$when )) {
                 that.$emit([ EVENTS.$when , Event.getPublic( EVENTS.$when )], [ type , func , args ]);
             }*/
@@ -217,10 +223,13 @@ function(
 
             // emit $$listener.removed event
             /*if (!Event.isPrivate( type )) {
-                that.$emit( EVENTS.$dispel ,[ type , func ]);
+                that.$emit( EVENTS.$dispel , [ type , func ]);
             }*/
-            if (!Event.isPrivate( type ) /*&& type !== Event.getPublic( EVENTS.$dispel )*/) {
-                that.$emit( EVENTS.$dispel ,[ type , func ]);
+            /*if (!Event.isPrivate( type )) {
+                that.$emit( EVENTS.$dispel , [ type , func ]);
+            }*/
+            if (!isLockedEvent( type )) {
+                that.$emit( EVENTS.$dispel , [ type , [ type , func ]]);
             }
         },
 
