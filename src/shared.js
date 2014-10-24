@@ -2,48 +2,14 @@ MOJO.shared = (function( Object , Array ) {
 
 
     var UNDEFINED;
-    var PROTOTYPE = 'prototype';
+    var PROTO = 'prototype';
     var HANDLE_MOJO = 'handleMOJO';
-    var $$LISTENER = '$$listener';
 
 
     function length( subject ) {
         return subject.length;
     }
-
-    // ---
-
-    function shift( subject ) {
-        return Array[PROTOTYPE].shift.call( subject );
-    }
-
-
-    function pop( subject ) {
-        return Array[PROTOTYPE].pop.call( subject );
-    }
-
-
-    function slice( subject , start , end ) {
-        return Array[PROTOTYPE].slice.call( subject , start , end );
-    }
-
-
-    function is( subject , test ) {
-        if (typeof test === 'string') {
-            return typeof subject === test;
-        }
-        else {
-            return subject instanceof test;
-        }
-    }
-
-
-    function has( subject , key ) {
-        return subject.hasOwnProperty( key );
-    }
-
-    // ---
-
+    
 
     function isArray( subject ) {
         return Array.isArray( subject );
@@ -62,15 +28,22 @@ MOJO.shared = (function( Object , Array ) {
 
     return {
 
-        PROTO: PROTOTYPE,
-
         EVENTS: {
             $set: '$$set',
             $unset: '$$unset',
-            $when: $$LISTENER + '.added',
-            $emit: $$LISTENER + '.triggered',
-            $dispel: $$LISTENER + '.removed'
+            $when: '$$listener.added',
+            $emit: '$$listener.triggered',
+            $dispel: '$$listener.removed',
+            $deref: '$$deref'
         },
+
+        length: length,
+
+        isArray: isArray,
+
+        ensureArray: ensureArray,
+
+        forEach: forEach,
 
         ocreate: function( subject ) {
             return Object.create( subject );
@@ -84,31 +57,39 @@ MOJO.shared = (function( Object , Array ) {
             delete subject[key];
         },
 
-        length: length,
-
         keys: function( subject ) {
             return Object.keys( subject );
         },
 
-        shift: shift,
+        shift: function( subject ) {
+            return Array[PROTO].shift.call( subject );
+        },
 
-        pop: pop,
+        pop: function( subject ) {
+            return Array[PROTO].pop.call( subject );
+        },
 
-        slice: slice,
+        slice: function( subject , start , end ) {
+            return Array[PROTO].slice.call( subject , start , end );
+        },
 
         last: function( subject ) {
             return subject[length( subject ) - 1];
         },
 
-        is: is,
+        is: function( subject , test ) {
+            return (typeof test === 'string') ? (typeof subject === test) : (subject instanceof test);
+            /*if (typeof test === 'string') {
+                return typeof subject === test;
+            }
+            else {
+                return subject instanceof test;
+            }*/
+        },
 
-        has: has,
-
-        isArray: isArray,
-
-        ensureArray: ensureArray,
-
-        forEach: forEach,
+        has: function( subject , key ) {
+            return subject.hasOwnProperty( key );
+        },
 
         ensureFunc: function( subject ) {
             return subject || function() {};

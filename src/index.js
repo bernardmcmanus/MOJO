@@ -9,6 +9,7 @@ function MOJO( seed ) {
 MOJO.__ready = function() {
 
     MOJO.inject( 'prototype', [
+        Error,
         MOJO,
         'Event',
         'when',
@@ -18,10 +19,12 @@ MOJO.__ready = function() {
         'pop',
         'slice',
         'length',
+        'is',
         'del',
         'EVENTS'
     ],
     function(
+        Error,
         MOJO,
         Event,
         when,
@@ -31,6 +34,7 @@ MOJO.__ready = function() {
         pop,
         slice,
         length,
+        is,
         del,
         EVENTS
     ){
@@ -50,7 +54,7 @@ MOJO.__ready = function() {
             var args = slice( arguments );
             var e = shift( args );
 
-            /*var emit = false;
+            /*var shouldEmit = false;
             var pubArgs, type;
 
             switch (e.type) {
@@ -60,18 +64,18 @@ MOJO.__ready = function() {
                 case EVENTS.$dispel:
                     type = shift( args );
                     pubArgs = pop( args );
-                    emit = (Event.getPublic( e.type ) !== type);
+                    shouldEmit = (Event.getPublic( e.type ) !== type);
                 break;
 
                 case EVENTS.$set:
                 case EVENTS.$unset:
-                    emit = true;
+                    shouldEmit = true;
                 break;
             }*/
 
             var type = shift( args );
             var pubArgs = pop( args );
-            var emit = (Event.getPublic( e.type ) !== type);
+            var shouldEmit = (Event.getPublic( e.type ) !== type);
 
             /*if (e.type === '$$listener.triggered' && type === '$$gnarly') {
                 MOJO.log(pubArgs);
@@ -80,8 +84,16 @@ MOJO.__ready = function() {
             //MOJO.log(e.type + ' -> ' + type);
             //MOJO.log(e.type,pubArgs);
 
-            if (emit) {
+            if (shouldEmit) {
                 that.$emit( Event.getPublic( e.type ) , pubArgs );
+            }
+
+            if (e.type === EVENTS.$emit && !Event.isPrivate( type )) {
+                //MOJO.log(pubArgs);
+                that.watchers.forEach(function( watcher ) {
+                    //MOJO.log(watcher);
+                    watcher.$emit.apply( watcher , pubArgs );
+                });
             }
 
             if (e.type === EVENTS.$emit && Event.isPrivate( type )) {
@@ -110,8 +122,35 @@ MOJO.__ready = function() {
             return that;
         };
 
-        proto.$subscribe = function( subscriber ) {
+        proto.$watch = function( parent ) {
+            
+            var that = this;
 
+            if (!is( parent , MOJO )) {
+                throw new Error( 'parent must be a MOJO' );
+            }
+
+            var watchers = parent.watchers;
+
+            if (watchers.indexOf( that ) < 0) {
+
+                watchers.push( that );
+
+                that.$once( EVENTS.$deref , function( e ) {
+                    var i = watchers.indexOf( that );
+                    if (i >= 0) {
+                        watchers.splice( i , 1 );
+                    }
+                });
+            }
+
+            return that;
+        };
+
+        proto.$deref = function() {
+            var that = this;
+            that.$emit( EVENTS.$deref );
+            //that.$dispel( null , null , true );
         };
 
         proto.$enq = function( task ) {

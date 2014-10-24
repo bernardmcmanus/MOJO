@@ -29,11 +29,15 @@ function(
             }
         });
 
+        defProp( subject , '__stack' , {
+            value: []
+        });
+
         defProp( subject , 'handlers' , {
             value: {}
         });
 
-        defProp( subject , '__stack' , {
+        defProp( subject , 'watchers' , {
             value: []
         });
 

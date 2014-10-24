@@ -26,7 +26,7 @@
     };
 
 
-    var mojo = new MOJO();
+    var mojo = new MOJO({ name: 'mojo' });
     function Test(){}
     function Test2(){}
     function Test3(){}
@@ -174,6 +174,102 @@
             });
             mojo.$emit( 'gnarly' );
             expect( mojo.handlers ).to.not.have.property( 'gnarly' );
+            done();
+        });
+    });
+
+    describe( '$watch' , function() {
+
+        var mojoParent = new MOJO({ name: 'mojo-parent' });
+        var mojoChild1 = new MOJO({ name: 'mojo-child-1' });
+        var mojoChild2 = new MOJO({ name: 'mojo-child-2' });
+        var mojoChild3 = new MOJO({ name: 'mojo-child-3' });
+
+        it( 'should watch a parent for triggered events' , function( done ) {
+
+            mojoParent.$once( 'gnarly' , function( e , data1 , data2 ) {
+                expect( e.type ).to.deep.equal( 'gnarly' );
+                expect( e.target ).to.deep.equal( mojoParent );
+                expect( e.currentTarget ).to.deep.equal( mojoParent );
+                expect( data1 ).to.deep.equal( 'data1' );
+                expect( data2 ).to.deep.equal( 'data2' );
+            });
+
+            mojoChild1.$once( 'gnarly' , function( e , data1 , data2 ) {
+                expect( e.type ).to.deep.equal( 'gnarly' );
+                expect( e.target ).to.deep.equal( mojoParent );
+                expect( e.currentTarget ).to.deep.equal( mojoChild1 );
+                expect( data1 ).to.deep.equal( 'data1' );
+                expect( data2 ).to.deep.equal( 'data2' );
+                done();
+            });
+
+            mojoChild1.$watch( mojoParent );
+            expect( mojoParent.watchers ).to.include( mojoChild1 );
+            mojoParent.$emit( 'gnarly' , [ 'data1' , 'data2' ]);
+        });
+
+        it( 'should allow events to bubble up the watchers tree' , function( done ) {
+
+            mojoChild2.$once( 'gnarly' , function( e , data1 , data2 ) {
+                expect( e.type ).to.deep.equal( 'gnarly' );
+                expect( e.target ).to.deep.equal( mojoParent );
+                expect( e.currentTarget ).to.deep.equal( mojoChild2 );
+                expect( data1 ).to.deep.equal( 'data1' );
+                expect( data2 ).to.deep.equal( 'data2' );
+                done();
+            });
+
+            mojoChild2.$watch( mojoChild1 );
+            expect( mojoChild1.watchers.length ).to.equal( 1 );
+            mojoParent.$emit( 'gnarly' , [ 'data1' , 'data2' ]);
+        });
+
+        it( 'should not allow events to bubble if propagation is stopped' , function( done ) {
+
+            mojoChild3.$when( 'gnarly' , function( e ) {
+                assert.ok( false , 'propagation was not stopped' );
+            });
+
+            mojoChild1.$once( 'gnarly' , function( e ) {
+                e.stopPropagation();
+            });
+
+            mojoChild3.$watch( mojoChild2 );
+            expect( mojoChild2.watchers.length ).to.equal( 1 );
+            mojoParent.$emit( 'gnarly' );
+
+            async(function() {
+                mojoChild3.$dispel();
+                done();
+            });
+        });
+
+        it( 'should integrate seamlessly with MOJO.aggregate' , function( done ) {
+
+            MOJO.aggregate([
+                mojoChild1,
+                mojoChild2,
+                mojoChild3
+            ])
+            .$when( 'gnarly' , function( e ) {
+                expect( e.currentTarget ).to.deep.equal( mojoChild1 );
+            });
+
+            mojoChild1.$once( 'gnarly' , function( e ) {
+                e.stopPropagation();
+            });
+
+            mojoParent.$emit( 'gnarly' );
+
+            async(function() {
+                done();
+            });
+        });
+
+        it( 'should only allow unique watchers' , function( done ) {
+            mojoChild1.$watch( mojoParent );
+            expect( mojoParent.watchers.length ).to.equal( 1 );
             done();
         });
     });

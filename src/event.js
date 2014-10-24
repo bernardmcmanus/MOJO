@@ -4,16 +4,14 @@ MOJO.inject( 'Event' ,
     'forEach',
     'getHandlerFunc',
     'keys',
-    'ocreate',
-    'PROTO'
+    'ocreate'
 ],
 function(
     Date,
     forEach,
     getHandlerFunc,
     keys,
-    ocreate,
-    PROTO
+    ocreate
 ){
 
 
@@ -59,7 +57,7 @@ function(
     };
 
 
-    Event[ PROTO ] = {
+    Event.prototype = {
 
         preventDefault: function() {
             this[DEFAULT_PREVENTED] = true;

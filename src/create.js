@@ -1,18 +1,16 @@
 MOJO.inject( 'create' ,
 [
     MOJO,
-    'ocreate',
-    'PROTO'
+    'ocreate'
 ],
 function(
     MOJO,
-    ocreate,
-    PROTO
+    ocreate
 ){
 
     function create( proto ) {
 
-        var mojo_proto = ocreate( MOJO[ PROTO ] );
+        var mojo_proto = ocreate( MOJO.prototype );
 
         for (var key in proto) {
             mojo_proto[key] = proto[key];
