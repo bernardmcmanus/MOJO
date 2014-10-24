@@ -20,7 +20,7 @@ function(
 
         var inprog = false;
 
-        defProp( subject , 'inprog' , {
+        defProp( subject , '__inprog' , {
             get: function() {
                 return inprog;
             },
@@ -33,7 +33,7 @@ function(
             value: {}
         });
 
-        defProp( subject , 'stack' , {
+        defProp( subject , '__stack' , {
             value: []
         });
 

@@ -11,6 +11,7 @@ MOJO.shared = (function( Object , Array ) {
         return subject.length;
     }
 
+    // ---
 
     function shift( subject ) {
         return Array[PROTOTYPE].shift.call( subject );
@@ -41,6 +42,8 @@ MOJO.shared = (function( Object , Array ) {
         return subject.hasOwnProperty( key );
     }
 
+    // ---
+
 
     function isArray( subject ) {
         return Array.isArray( subject );
@@ -62,8 +65,8 @@ MOJO.shared = (function( Object , Array ) {
         PROTO: PROTOTYPE,
 
         EVENTS: {
-            set: '$$set',
-            unset: '$$unset',
+            $set: '$$set',
+            $unset: '$$unset',
             $when: $$LISTENER + '.added',
             $emit: $$LISTENER + '.triggered',
             $dispel: $$LISTENER + '.removed'
@@ -92,6 +95,10 @@ MOJO.shared = (function( Object , Array ) {
         pop: pop,
 
         slice: slice,
+
+        last: function( subject ) {
+            return subject[length( subject ) - 1];
+        },
 
         is: is,
 

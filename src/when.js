@@ -10,6 +10,7 @@ MOJO.inject( 'when' ,
     'ensureArray',
     'forEach',
     'length',
+    'last',
     'ensureFunc',
     'getHandlerFunc',
     'isArray',
@@ -27,6 +28,7 @@ function(
     ensureArray,
     forEach,
     length,
+    last,
     ensureFunc,
     getHandlerFunc,
     isArray,
@@ -107,7 +109,7 @@ function(
                     });
 
                     if (!isLockedEvent( type )) {
-                        that.$emit( EVENTS.$emit , [ type , [ type , event , args ]]);
+                        that.$emit( EVENTS.$emit , [ type , [ type , args , event ]]);
                     }
 
                     /*if (!Event.isPrivate( type )) {
@@ -132,7 +134,7 @@ function(
 
                 forEach( eventType , function( type ) {
                     if (force || !Event.isPrivate( type )) {
-                        that.__remove( type , func );
+                        that.__remove( type , func , !!force );
                     }
                 });
             });
@@ -149,7 +151,7 @@ function(
 
             var that = this;
             var eventType = shift( args );
-            var MOJOHandler = is( args[0] , 'function' ) || is( args[0] , MOJO ) ? pop( args ) : that;
+            var MOJOHandler = is( last( args ) , 'function' ) || is( last( args ) , MOJO ) ? pop( args ) : that;
             var bindArgs = args[0];
             
             var func = getHandlerFunc( MOJOHandler );
@@ -188,7 +190,7 @@ function(
                 that.$emit( EVENTS.$when , [ type , func , args ]);
             }*/
             if (!isLockedEvent( type )) {
-                that.$emit( EVENTS.$when , [ type , [ type , func , args ]]);
+                that.$emit( EVENTS.$when , [ type , [ type , args , func ]]);
             }
 
             /*if (!Event.isPrivate( type ) && type !== Event.getPublic( EVENTS.$when )) {
@@ -198,7 +200,7 @@ function(
             return evtHandler;
         },
 
-        __remove: function( type , func ) {
+        __remove: function( type , func , force ) {
 
             var that = this;
             var handlers = that.__get();
@@ -229,7 +231,7 @@ function(
                 that.$emit( EVENTS.$dispel , [ type , func ]);
             }*/
             if (!isLockedEvent( type )) {
-                that.$emit( EVENTS.$dispel , [ type , [ type , func ]]);
+                that.$emit( EVENTS.$dispel , [ type , [ type , func , force ]]);
             }
         },
 

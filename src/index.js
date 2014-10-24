@@ -73,6 +73,10 @@ MOJO.__ready = function() {
             var pubArgs = pop( args );
             var emit = (Event.getPublic( e.type ) !== type);
 
+            /*if (e.type === '$$listener.triggered' && type === '$$gnarly') {
+                MOJO.log(pubArgs);
+            }*/
+
             //MOJO.log(e.type + ' -> ' + type);
             //MOJO.log(e.type,pubArgs);
 
@@ -81,67 +85,28 @@ MOJO.__ready = function() {
             }
 
             if (e.type === EVENTS.$emit && Event.isPrivate( type )) {
-                that.$emit( Event.getPublic( type ) , pop( pubArgs ));
+                /*var pubArgs2 = pubArgs.slice( 0 );
+                pubArgs2[0] = Event.getPublic( type );
+                //that.$emit.apply( that , pubArgs );
+                MOJO.log(pubArgs2);
+                MOJO.log(pubArgs);*/
+                that.$emit( Event.getPublic( type ) , pubArgs[1] );
             }
         };
-
-        /*proto.__handleMOJO = function() {
-
-            var that = this;
-            var args = slice( arguments );
-            var e = shift( args );
-            var emit = false;
-            var pubArgs, type;
-
-            switch (e.type) {
-
-                case EVENTS.$when:
-                case EVENTS.$emit:
-                case EVENTS.$dispel:
-                    type = args[0];
-                    pubArgs = args;
-                    //pubArgs = [];
-                    emit = (Event.getPublic( e.type ) !== type);
-                    if (!Event.isPrivate( type )) {
-                        MOJO.log(e.type);
-                        pubArgs = pop( pubArgs );
-                    }
-                break;
-
-                case EVENTS.$set:
-                case EVENTS.$unset:
-                    emit = true;
-                break;
-            }
-
-            if (e.type === EVENTS.$emit && type === 'gnarly') {
-                MOJO.log(pubArgs[2]);
-            }
-
-            //MOJO.log(e.type + ' -> ' + type);
-
-            if (emit) {
-                that.$emit( Event.getPublic( e.type ) , args );
-            }
-
-            if (Event.isPrivate( type )) {
-                that.$emit( Event.getPublic( type ) , pubArgs );
-            }
-        };*/
 
         proto.handleMOJO = function() {};
 
         proto.$set = function( key , value ) {
             var that = this;
             that[key] = value;
-            that.$emit( EVENTS.set , [ key , [ key ]]);
+            that.$emit( EVENTS.$set , [ key , [ key ]]);
             return that;
         };
 
         proto.$unset = function( key ) {
             var that = this;
             del( that , key );
-            that.$emit( EVENTS.unset , [ key , [ key ]]);
+            that.$emit( EVENTS.$unset , [ key , [ key ]]);
             return that;
         };
 
@@ -151,39 +116,27 @@ MOJO.__ready = function() {
 
         proto.$enq = function( task ) {
             var that = this;
-            that.stack.push( task );
+            that.__stack.push( task );
         };
 
         proto.$digest = function() {
             
             var that = this;
-            var stack = that.stack;
+            var stack = that.__stack;
 
-            if (that.inprog) {
+            if (that.__inprog) {
                 //MOJO.log('--- INPROG ---',stack.length);
                 return;
             }
 
-            that.inprog = true;
+            that.__inprog = true;
 
             while (length( stack ) > 0) {
                 shift( stack )();
             }
             
-            that.inprog = false;
+            that.__inprog = false;
         };
-
-        /*proto.spawn = function( instance ) {
-            
-            instance = instance || {};
-            instance = instance.handleMOJO ? instance : new MOJO( instance );
-
-            var that = this;
-
-            instance.bubbleRoute.push( that );
-            
-            return that;
-        };*/
 
         del( MOJO , '__ready' );
 

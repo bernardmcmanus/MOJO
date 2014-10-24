@@ -39,84 +39,6 @@
         tubes: function() {},
         handleMOJO: function() {}
     });
-
-
-    /*describe( 'Private Events' , function() {
-
-        it( 'should also emit public events' , function( done ) {
-            mojo.$when( '$$listener.added' , function( e , args ) {
-                //MOJO.log(args);
-            });
-            mojo.$when( 'listener.triggered' , function( e , type , originalEvent , args ) {
-                var args = Array.prototype.slice.call( arguments , 1 );
-                //MOJO.log(args);
-                if (type === '$$gnarly') {
-                    //MOJO.log(args);
-                }
-            });
-            mojo.$when([ '$$gnarly' , 'gnarly' ] , function( e , data ) {
-                
-                //MOJO.log(e.type,data);
-
-                //var args = Array.prototype.slice.call( arguments , 1 );
-                //MOJO.log(arguments);
-                //expect( args[0][0] ).to.equal( 'gnarly' );
-                //done();
-            });
-            mojo.$emit( '$$gnarly' , { rad: 'awesome' });
-            mojo.$dispel( null , null , true );
-            MOJO.log(mojo.handlers);
-            done();
-        });
-    });*/
-
-    /*describe( 'Private Events' , function() {
-
-        it( 'should also emit public events' , function( done ) {
-            mojo.$when( '$$set' , function( e , key , args ) {
-                MOJO.log(arguments);
-            });
-            mojo.$when( 'set' , function( e , key ) {
-                MOJO.log(arguments);
-            });
-            mojo.$set( 'gnarly' , 'rad' );
-            done();
-        });
-    });
-
-    return;*/
-
-
-    /*describe( '#aggregate' , function() {
-        it( 'should aggregate mojos' , function( done ) {
-            
-            var mojos = [];
-
-            for (var i = 0; i < 10; i++) {
-                mojos.push(
-                    new MOJO({ name: 'mojo-' + i })
-                );
-            }
-
-            var aggregator = MOJO.aggregate( mojos );
-
-            aggregator.$when( 'gnarly' , function( e ) {
-                MOJO.log(e);
-            });
-
-            aggregator.$emit( 'gnarly' );
-
-            aggregator.$dispel( 'gnarly' );
-
-            aggregator.$emit( 'gnarly' );
-
-            //MOJO.log(mojos[4].handlers);
-
-            done();
-        });
-    });
-
-    return;*/
     
     describe( '#constructor' , function() {
         it( 'should create a new MOJO instance' , function( done ) {
@@ -197,7 +119,7 @@
             expect( mojo.handlers.gnarly.length ).to.equal( 1 );
             done();
         });
-        it( 'should add a listener to the subject when handler is falsy' , function( done ) {
+        it( 'should use subject.handleMOJO when handler is falsy' , function( done ) {
             mojo.$when( 'rad' );
             expect( mojo.handlers.rad[0].func ).to.equal( mojo.handleMOJO );
             mojo.$dispel( 'rad' );
@@ -289,6 +211,67 @@
             });
             expect( gnarly2.handlers.rad ).to.be.undefined;
             gnarly2.$emit( 'rad' );
+            done();
+        });
+    });
+
+    describe( 'MOJO.aggregate' , function() {
+
+        var mojos = [ 0 , 1 , 2 , 3 ].map(function( i ) {
+            return new MOJO({ name: 'mojo-' + i });
+        });
+
+        var aggregator = MOJO.aggregate( mojos );
+
+        it( 'should aggregate mojos[i].$when' , function( done ) {
+            var n = -1;
+            aggregator.$when( 'gnarly' , function( e ) {
+                expect( e.type ).to.equal( 'gnarly' );
+                expect( e.currentTarget ).to.equal( n < 0 ? aggregator : mojos[n] );
+                n++;
+            });
+            mojos.forEach(function( mojo ) {
+                expect( mojo.handlers ).to.have.property( 'gnarly' );
+                expect( mojo.handlers.gnarly.length ).to.equal( 1 );
+            });
+            aggregator.$emit( 'gnarly' );
+            done();
+        });
+
+        it( 'should aggregate mojos[i].$dispel' , function( done ) {
+            aggregator.$dispel( 'gnarly' );
+            expect( aggregator.handlers ).to.not.have.property( 'gnarly' );
+            mojos.forEach(function( mojo ) {
+                expect( mojo.handlers ).to.not.have.property( 'gnarly' );
+            });
+            done();
+        });
+
+        it( 'should aggregate mojos[i].$once' , function( done ) {
+            var n = -1;
+            aggregator.$once( 'gnarly' , function( e ) {
+                expect( e.type ).to.equal( 'gnarly' );
+                expect( e.currentTarget ).to.equal( n < 0 ? aggregator : mojos[n] );
+                n++;
+            });
+            mojos.forEach(function( mojo ) {
+                expect( mojo.handlers ).to.have.property( 'gnarly' );
+                expect( mojo.handlers.gnarly.length ).to.equal( 1 );
+            });
+            aggregator.$emit( 'gnarly' );
+            expect( aggregator.handlers ).to.not.have.property( 'gnarly' );
+            mojos.forEach(function( mojo ) {
+                expect( mojo.handlers ).to.not.have.property( 'gnarly' );
+            });
+            done();
+        });
+
+        it( 'should not aggregate private events' , function( done ) {
+            expect(function() {
+                aggregator.$when( '$$gnarly' );
+            })
+            .to
+            .throw( Error , ( /private events cannot be aggregated/ ));
             done();
         });
     });
