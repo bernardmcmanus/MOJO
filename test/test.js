@@ -1,12 +1,19 @@
 (function() {
 
     'use strict';
+
+
+    var requirejs = require( 'requirejs' );
+    requirejs.config({
+        baseUrl: __dirname,
+        nodeRequire: require
+    });
     
 
-    var util = require( 'util' );
-    var path = require( 'path' );
-    var fs = require( 'fs-extra' );
-    var chai = require( 'chai' );
+    var util = requirejs( 'util' );
+    var path = requirejs( 'path' );
+    var fs = requirejs( 'fs-extra' );
+    var chai = requirejs( 'chai' );
     var assert = chai.assert;
     var expect = chai.expect;
 
@@ -17,6 +24,9 @@
     var MOJO = require(
         path.resolve( __dirname , ( '../' + pkg.main ))
     );
+
+    console.log(MOJO);
+    return;
 
     MOJO.log = function() {
         var args = Array.prototype.map.call( arguments , function( arg ) {

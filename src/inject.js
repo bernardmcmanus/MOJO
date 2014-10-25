@@ -1,31 +1,17 @@
-MOJO.inject = (function( MOJO ) {
+define([ 'MOJO' , 'shared' ] , function( MOJO , shared ) {
 
-
-    var shared = MOJO.shared;
-    var pop = shared.pop;
-    var has = shared.has;
     var is = shared.is;
 
-
-    function inject() {
+    function inject( dependencies , callback ) {
 
         var that = this;
-        var args = arguments;
-        var callback = pop( args );
-        var dependencies = pop( args );
-        var id = pop( args );
 
         dependencies = dependencies.map(function( subject ) {
             
             var out;
 
             if (is( subject , 'string' )) {
-                if (has( shared , subject )) {
-                    out = shared[subject];
-                }
-                else {
-                    out = MOJO[subject];
-                }
+                out = shared[subject];
             }
             else {
                 out = subject;
@@ -34,14 +20,11 @@ MOJO.inject = (function( MOJO ) {
             return out;
         });
 
-        MOJO[id] = callback.apply( null , dependencies );
+        return callback.apply( null , dependencies );
     }
 
-
     return inject;
-
-
-}( MOJO ));
+});
 
 
 

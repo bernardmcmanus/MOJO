@@ -1,19 +1,10 @@
+define([ 'MOJO' , 'inject' , 'Event' , 'when' , 'construct' ],
 
+function( MOJO , inject , Event , when , construct ) {
+    
 
-function MOJO( seed ) {
-    var that = this;
-    that.__init( that , ( seed || {} ));
-}
-
-
-MOJO.__ready = function() {
-
-    MOJO.inject( 'prototype', [
+    return inject([
         Error,
-        MOJO,
-        'Event',
-        'when',
-        'construct',
         'ocreate',
         'shift',
         'pop',
@@ -25,10 +16,6 @@ MOJO.__ready = function() {
     ],
     function(
         Error,
-        MOJO,
-        Event,
-        when,
-        construct,
         ocreate,
         shift,
         pop,
@@ -177,11 +164,11 @@ MOJO.__ready = function() {
             that.__inprog = false;
         };
 
-        del( MOJO , '__ready' );
+        //del( MOJO , '__ready' );
 
         return proto;
     });
-};
+});
 
 
 

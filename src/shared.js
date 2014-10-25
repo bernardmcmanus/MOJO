@@ -1,6 +1,7 @@
-MOJO.shared = (function( Object , Array ) {
+define([], function() {
 
-
+    /*var Array = Array;
+    var Object = Object;*/
     var UNDEFINED;
     var PROTO = 'prototype';
     var HANDLE_MOJO = 'handleMOJO';
@@ -79,12 +80,6 @@ MOJO.shared = (function( Object , Array ) {
 
         is: function( subject , test ) {
             return (typeof test === 'string') ? (typeof subject === test) : (subject instanceof test);
-            /*if (typeof test === 'string') {
-                return typeof subject === test;
-            }
-            else {
-                return subject instanceof test;
-            }*/
         },
 
         has: function( subject , key ) {
@@ -99,9 +94,7 @@ MOJO.shared = (function( Object , Array ) {
             return (subject || {})[HANDLE_MOJO] ? subject[HANDLE_MOJO] : subject;
         }
     };
-
-    
-}( Object , Array ));
+});
 
 
 

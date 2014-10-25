@@ -1,25 +1,20 @@
-MOJO.inject( 'create' ,
-[
-    MOJO,
-    'ocreate'
-],
-function(
-    MOJO,
-    ocreate
-){
+define([ 'inject' , 'proto' ] , function( inject , prototype ) {
 
-    function create( proto ) {
+    return inject([ 'ocreate' ] , function( ocreate ){
 
-        var mojo_proto = ocreate( MOJO.prototype );
+        function create( proto ) {
 
-        for (var key in proto) {
-            mojo_proto[key] = proto[key];
+            var mojo_proto = ocreate( prototype );
+
+            for (var key in proto) {
+                mojo_proto[key] = proto[key];
+            }
+
+            return mojo_proto;
         }
 
-        return mojo_proto;
-    }
-
-    return create;
+        return create;
+    });
 });
 
 
