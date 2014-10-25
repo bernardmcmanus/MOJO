@@ -21,12 +21,9 @@
         path.resolve( __dirname , '../package.json' )
     );
 
-    var MOJO = require(
+    var MOJO = requirejs(
         path.resolve( __dirname , ( '../' + pkg.main ))
     );
-
-    console.log(MOJO);
-    return;
 
     MOJO.log = function() {
         var args = Array.prototype.map.call( arguments , function( arg ) {

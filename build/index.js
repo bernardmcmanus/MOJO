@@ -21,8 +21,8 @@
         wrap: {
             startFile: 'wrap.start.js',
             endFile: 'wrap.end.js'
-        },
-        optimize: 'none'
+        }/*,
+        optimize: 'none'*/
     };
 
 }())
