@@ -153,7 +153,7 @@
             )
             .to
             .equal(
-                Object.keys( MOJO.shared.EVENTS ).length
+                Object.keys( MOJO.$_EVT ).length
             );
             Object.keys( mojo.handlers ).forEach(function( key ) {
                 expect( mojo.handlers[key].length ).to.equal( 1 );
@@ -450,8 +450,8 @@
 
         it( 'should never be removed if locked' , function( done ) {
             mojo.$dispel( null , null , true );
-            Object.keys( MOJO.shared.EVENTS ).forEach(function( key ) {
-                var type = MOJO.shared.EVENTS[key];
+            Object.keys( MOJO.$_EVT ).forEach(function( key ) {
+                var type = MOJO.$_EVT[key];
                 expect( mojo.handlers ).to.have.property( type );
             });
             done();

@@ -1,23 +1,25 @@
 (function() {
 
+    var exclude = [];
+    var build = 'mojo.min.js';
+
     return {
         baseUrl: '../src',
         paths: {
-            transpiler: '../vendor/transpiler',
             MOJO: 'main',
             proto: 'proto',
-            shared: 'shared',
-            inject: 'inject',
-            create: 'create',
-            construct: 'construct',
             when: 'when',
-            aggregate: 'aggregate',
             EventHandler: 'eventHandler',
-            Event: 'event'
+            Event: 'event',
+            shared: 'static/shared',
+            create: 'static/create',
+            construct: 'static/construct',
+            aggregate: 'static/aggregate',
+            transpiler: 'vendor/transpiler'
         },
-        include: [ 'transpiler' , 'create' , 'construct' , 'aggregate' , 'proto' ],
-        exclude: [],
-        out: '../mojo.min.js',
+        include: [ 'transpiler' , 'shared' , 'create' , 'construct' , 'aggregate' , 'proto' ],
+        exclude: exclude,
+        out: '../' + build,
         wrap: {
             startFile: 'wrap.start.js',
             endFile: 'wrap.end.js'
