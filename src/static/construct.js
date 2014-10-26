@@ -32,7 +32,7 @@ define([] , function() {
         });
 
         $_defineProperty( subject , $_HANDLE_MOJO , {
-            value: subject[ $_HANDLE_MOJO ].bind( subject )
+            value: $_ensureFunc( subject[ $_HANDLE_MOJO ] ).bind( subject )
         });
 
         $_defineProperty( subject , __$_HANDLE_MOJO , {

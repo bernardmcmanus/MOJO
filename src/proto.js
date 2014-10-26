@@ -53,7 +53,7 @@ function( MOJO , Event , when , construct ) {
 
         if (e.type === $_EVT.$emit && !Event.isPrivate( type )) {
             //MOJO.log(pubArgs);
-            that.watchers.forEach(function( watcher ) {
+            $_forEach( that.watchers , function( watcher ) {
                 //MOJO.log(watcher);
                 watcher.$emit.apply( watcher , pubArgs );
             });
@@ -68,9 +68,7 @@ function( MOJO , Event , when , construct ) {
             that.$emit( Event.getPublic( type ) , pubArgs[1] );
         }
     };
-
-    proto[$_HANDLE_MOJO] = $_ensureFunc();
-
+    
     proto.$set = function( key , value ) {
         var that = this;
         that[key] = value;
