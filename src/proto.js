@@ -1,6 +1,26 @@
-define([ 'MOJO' , 'Event' , 'when' , 'construct' ],
+import MOJO from 'main';
+import { isPrivate , getPublic } from 'event';
+import when from 'when';
+import construct from 'static/construct';
+import {
+    $_create,
+    $_delete,
+    $_is,
+    $_indexOf,
+    $_slice,
+    $_shift,
+    $_pop,
+    $_forEach,
+    $_length,
+    $_EVT,
+    __$_HANDLE_MOJO
+} from 'static/shared';
 
-function( MOJO , Event , when , construct ) {
+
+export default Proto();
+
+
+function Proto() {
 
     var proto = $_create( when );
 
@@ -27,7 +47,7 @@ function( MOJO , Event , when , construct ) {
             case $_EVT.$dispel:
                 type = shift( args );
                 pubArgs = pop( args );
-                shouldEmit = (Event.getPublic( e.type ) !== type);
+                shouldEmit = (getPublic( e.type ) !== type);
             break;
 
             case $_EVT.$set:
@@ -38,7 +58,7 @@ function( MOJO , Event , when , construct ) {
 
         var type = $_shift( args );
         var pubArgs = $_pop( args );
-        var shouldEmit = (Event.getPublic( e.type ) !== type);
+        var shouldEmit = (getPublic( e.type ) !== type);
 
         /*if (e.type === '$$listener.triggered' && type === '$$gnarly') {
             MOJO.log(pubArgs);
@@ -48,10 +68,10 @@ function( MOJO , Event , when , construct ) {
         //MOJO.log(e.type,pubArgs);
 
         if (shouldEmit) {
-            that.$emit( Event.getPublic( e.type ) , pubArgs );
+            that.$emit( getPublic( e.type ) , pubArgs );
         }
 
-        if (e.type === $_EVT.$emit && !Event.isPrivate( type )) {
+        if (e.type === $_EVT.$emit && !isPrivate( type )) {
             //MOJO.log(pubArgs);
             $_forEach( that.watchers , function( watcher ) {
                 //MOJO.log(watcher);
@@ -59,16 +79,16 @@ function( MOJO , Event , when , construct ) {
             });
         }
 
-        if (e.type === $_EVT.$emit && Event.isPrivate( type )) {
+        if (e.type === $_EVT.$emit && isPrivate( type )) {
             /*var pubArgs2 = pubArgs.slice( 0 );
-            pubArgs2[0] = Event.getPublic( type );
+            pubArgs2[0] = getPublic( type );
             //that.$emit.apply( that , pubArgs );
             MOJO.log(pubArgs2);
             MOJO.log(pubArgs);*/
-            that.$emit( Event.getPublic( type ) , pubArgs[1] );
+            that.$emit( getPublic( type ) , pubArgs[1] );
         }
     };
-    
+
     proto.$set = function( key , value ) {
         var that = this;
         that[key] = value;
@@ -137,7 +157,7 @@ function( MOJO , Event , when , construct ) {
     };
 
     return proto;
-});
+}
 
 
 

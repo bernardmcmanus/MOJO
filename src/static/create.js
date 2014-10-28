@@ -1,16 +1,19 @@
-define([ 'proto' ] , function( prototype ) {
+import proto from 'proto';
+import {
+    $_create
+} from 'static/shared';
 
-    return function( proto ) {
 
-        var mojo_proto = $_create( prototype );
+export default function( subject ) {
 
-        for (var key in proto) {
-            mojo_proto[key] = proto[key];
-        }
+    var mojo_proto = $_create( proto );
 
-        return mojo_proto;
-    };
-});
+    for (var key in subject) {
+        mojo_proto[key] = subject[key];
+    }
+
+    return mojo_proto;
+}
 
 
 

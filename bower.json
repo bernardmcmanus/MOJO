@@ -6,7 +6,7 @@
         "Bernard McManus"
     ],
     "description": "The Modern JavaScript Object",
-    "main": "mojo-0.2.0.js",
+    "main": "dist/mojo-0.2.0.min.js",
     "keywords": [
         "javascript",
         "object",

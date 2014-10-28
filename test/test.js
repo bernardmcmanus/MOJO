@@ -21,9 +21,12 @@
         path.resolve( __dirname , '../package.json' )
     );
 
-    var MOJO = requirejs(
+    /*var MOJO = requirejs(
         path.resolve( __dirname , ( '../' + pkg.main ))
-    );
+    );*/
+
+    var MOJO = requirejs( '../dist/mojo-0.2.0.js' );
+
 
     MOJO.log = function() {
         var args = Array.prototype.map.call( arguments , function( arg ) {
@@ -379,7 +382,7 @@
         });
     });
 
-    describe( 'Event' , function() {
+    /*describe( 'Event' , function() {
         
         var Event = MOJO.Event;
         
@@ -427,9 +430,9 @@
                 done();
             });
         });
-    });
+    });*/
 
-    describe( 'EventHandler' , function() {
+    /*describe( 'EventHandler' , function() {
         it( 'args should be unique to each event occurrence' , function( done ) {
 
             function handlerFunc( e ) {
@@ -444,7 +447,7 @@
             }
             done();
         });
-    });
+    });*/
 
     describe( 'Private Events' , function() {
 
