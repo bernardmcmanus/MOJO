@@ -1,23 +1,23 @@
 {
-    "name": "MOJO",
-    "version": "0.2.0",
-    "homepage": "https://github.com/elnarddogg/MOJO.git",
-    "authors": [
-        "Bernard McManus"
-    ],
-    "description": "The Modern JavaScript Object",
-    "main": "dist/mojo-0.2.0.min.js",
-    "keywords": [
-        "javascript",
-        "object",
-        "data"
-    ],
-    "license": "MIT",
-    "ignore": [
-        "**/.*",
-        "node_modules",
-        "bower_components",
-        "test",
-        "tests"
-    ]
+  "name": "MOJO",
+  "version": "0.2.0",
+  "homepage": "https://github.com/elnarddogg/MOJO.git",
+  "authors": [
+    "Bernard McManus"
+  ],
+  "description": "The Modern JavaScript Object",
+  "main": "dist/mojo-0.2.0.min.js",
+  "keywords": [
+    "javascript",
+    "object",
+    "data"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
 }

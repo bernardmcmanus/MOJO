@@ -1,18 +1,19 @@
 import proto from 'proto';
 import {
-    $_create
+  $_create,
+  $_defineProto
 } from 'static/shared';
 
 
-export default function( subject ) {
+export default function( subjectProto ) {
 
-    var mojo_proto = $_create( proto );
+  var extendedProto = $_defineProto($_create( proto ));
 
-    for (var key in subject) {
-        mojo_proto[key] = subject[key];
-    }
+  for (var key in subjectProto) {
+    extendedProto[key] = subjectProto[key];
+  }
 
-    return mojo_proto;
+  return extendedProto;
 }
 
 

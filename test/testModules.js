@@ -1,18 +1,18 @@
-import { $_EVT } from 'shared';
+import { $_EVT } from 'static/shared';
 import EventHandler from 'eventHandler';
 import {
-    Event,
-    isPrivate,
-    getPublic
+  Event,
+  isPrivate,
+  getPublic
 } from 'event';
 
 
-Event.isPrivate = isPrivate;
-Event.getPublic = getPublic;
-
-
 module.exports = {
-    '$_EVT': $_EVT,
-    'Event': Event,
-    'EventHandler': EventHandler
+  '$_EVT': $_EVT,
+  'Event': {
+    constructor: Event,
+    isPrivate: isPrivate,
+    getPublic: getPublic
+  },
+  'EventHandler': EventHandler
 };

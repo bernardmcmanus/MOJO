@@ -1,7 +1,7 @@
 module.exports = function( grunt ) {
 
 
-  var fs = require( 'fs' );
+  var fs = require( 'fs-extra' );
   var exec = require( 'child_process' ).exec;
   var util = require( 'util' );
   var AMDFormatter = require( 'es6-module-transpiler-amd-formatter' );
@@ -23,12 +23,16 @@ module.exports = function( grunt ) {
     },
 
     jshint: {
-      all: [ 'Gruntfile.js' , 'src/**/*.js' ]
+      all: [ 'Gruntfile.js' , 'src/**/*.js' ],
+      options: {
+        esnext: true
+      }
     },
 
     clean: {
-      'all': [ 'dist' , 'tmp' ],
+      'dist': [ 'dist' ],
       'tmp': [ 'tmp' ],
+      'test': [ 'test/mojo.js' , 'test/testModules.transpiled.js' , 'test/heap' ],
       'common-dev': [ 'dist/mojo-<%= pkg.version %>.js' ],
       'common-prod': [ 'dist/mojo-<%= pkg.version %>.min.js' ],
       'amd-dev': [ 'dist/mojo-<%= pkg.version %>.amd.js' ],
@@ -60,16 +64,12 @@ module.exports = function( grunt ) {
       ]
     }],
 
-    // watch: {
-    //   debug: {
-    //     files: [ 'Gruntfile.js' , 'src/**/*.js' , 'test/*.js' ],
-    //     tasks: [ 'test' ]
-    //   },
-    //   debugProd: {
-    //     files: [ 'Gruntfile.js' , 'src/**/*.js' , 'test/*.js' ],
-    //     tasks: [ 'testProd' ]
-    //   }
-    // },
+    watch: {
+      debug: {
+        files: [ 'Gruntfile.js' , 'src/**/*.js' , 'build/*.js' , 'test/*.js' ],
+        tasks: [ 'test' ]
+      }
+    },
 
     transpile: {
       amd: {
@@ -86,7 +86,7 @@ module.exports = function( grunt ) {
 
     concat: {
       options: {
-        banner: '/*! <%= pkg.name %> - <%= pkg.version %> - <%= pkg.author.name %> - <%= grunt.config.get( \'git-branch\' ) %> - <%= grunt.config.get( \'git-hash\' ) %> - <%= grunt.template.today("yyyy-mm-dd") %> */\n\n\n'
+        banner: '/*! <%= pkg.name %> - <%= pkg.version %> - <%= pkg.author.name %> - <%= grunt.config.get( \'git-branch\' ) %> - <%= grunt.config.get( \'git-hash\' ) %> - <%= grunt.template.today("yyyy-mm-dd") %> */\n\n'
       },
       amd: {
         src: 'tmp/**/*.amd.js',
@@ -130,24 +130,33 @@ module.exports = function( grunt ) {
   .forEach( grunt.loadNpmTasks );
 
 
-  function transpile( out , amd ) {
+  function transpile( umd , out , formatter ) {
+
+    formatter = formatter || BundleFormatter;
 
     var container = new Container({
       resolvers: [new FileResolver([ 'src/' ])],
-      formatter: new (amd ? AMDFormatter : BundleFormatter)()
+      formatter: new formatter()
     });
 
-    container.getModule( '../build/mojo.umd' );
+    container.getModule( umd );
     container.write( out );
 
-    /*var transpilerJS = fs.readFileSync( './src/vendor/transpiler.js' , 'utf-8' );
-    var compiled = fs.readFileSync( './mojo.min.js.js' , 'utf-8' );
-    fs.writeFileSync( './mojo.min.js.js' , ( transpilerJS + '\n\n' + compiled ));*/
+    // remove sourceMappingURL
+    var sourceMapRegex = /(^.*sourceMappingURL.*\n?$)/mi;
+    var transpiled = fs.readFileSync( out , 'utf-8' ).replace( sourceMapRegex , '' );
+    fs.writeFileSync( out , transpiled );
   }
 
 
+  grunt.registerTask( 'transpile:testModules' , function() {
+    transpile( '../test/testModules' , 'test/testModules.transpiled.js' );
+    fs.removeSync( 'test/testModules.transpiled.js.map' );
+  });
+
+
   grunt.registerTask( 'transpile:common' , function() {
-    transpile( 'tmp/mojo.common.js' );
+    transpile( '../build/mojo.umd' , 'tmp/mojo.common.js' );
   });
 
 
@@ -188,6 +197,14 @@ module.exports = function( grunt ) {
   });
 
 
+  grunt.registerTask( 'copyTestBuild' , function() {
+    var version = grunt.config.get( 'pkg.version' );
+    var src = 'dist/mojo-' + version + '.js';
+    var dest = 'test/mojo.js';
+    fs.copySync( src , dest );
+  });
+
+
   grunt.registerTask( 'runTests' , function() {
     var done = this.async();
     exec( 'npm test' , function( err , stdout , stderr ) {
@@ -198,7 +215,7 @@ module.exports = function( grunt ) {
 
 
   grunt.registerTask( 'always' , [
-    //'jshint',
+    'jshint',
     'git-describe',
     'getHash',
     'getBranch'
@@ -206,17 +223,19 @@ module.exports = function( grunt ) {
 
 
   grunt.registerTask( 'default' , [
+    'clean',
     'build',
-    'replace'
+    'replace',
+    'test',
+    'clean:test'
   ]);
 
 
   grunt.registerTask( 'build' , [
     'always',
-    'build:amd-dev',
-    'build:amd-prod',
-    'build:common-dev',
-    'build:common-prod'
+    'clean:dist',
+    //'build:amd',
+    'build:common'
   ]);
 
 
@@ -262,7 +281,22 @@ module.exports = function( grunt ) {
     'concat:amd',
     'clean:tmp'
   ]);
-  
+
+
+  grunt.registerTask( 'test' , [
+    'clean:test',
+    'build:common-dev',
+    'copyTestBuild',
+    'transpile:testModules',
+    'runTests'
+  ]);
+
+
+  grunt.registerTask( 'debug' , [
+    'test',
+    'watch:debug'
+  ]);
+
 };
 
 

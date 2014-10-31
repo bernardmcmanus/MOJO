@@ -1,34 +1,34 @@
 import {
-    $_slice,
-    $_ensureArray
+  $_slice,
+  $_ensureArray
 } from 'static/shared';
 
 export default function( func , context , bindArgs ) {
 
-    var that = this;
+  var that = this;
 
-    that.func = func;
-    that.locked = false;
-    that.before = function() {};
-    that.after = function() {};
+  that.func = func;
+  that.locked = false;
+  that.before = function() {};
+  that.after = function() {};
 
-    bindArgs = $_ensureArray( bindArgs );
+  bindArgs = $_ensureArray( bindArgs );
 
-    that.invoke = function( event , invArgs ) {
-        
-        if (event.cancelBubble) {
-            return;
-        }
+  that.invoke = function( event , invArgs ) {
+    
+    if (event.cancelBubble) {
+      return;
+    }
 
-        var args = $_slice( bindArgs ).concat(
-            $_ensureArray( invArgs )
-        );
+    var args = $_slice( bindArgs ).concat(
+      $_ensureArray( invArgs )
+    );
 
-        args.unshift( event );
-        that.before( event , func );
-        func.apply( context , args );
-        that.after( event , func );
-    };
+    args.unshift( event );
+    that.before( event , func );
+    func.apply( context , args );
+    that.after( event , func );
+  };
 }
 
 

@@ -1,6 +1,6 @@
 export default function( seed ) {
-    var that = this;
-    that.__init( that , ( seed || {} ));
+  var that = this;
+  that.__init( that , ( seed || {} ));
 }
 
 

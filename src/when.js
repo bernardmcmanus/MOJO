@@ -1,191 +1,192 @@
 import MOJO from 'main';
 import EventHandler from 'eventHandler';
 import {
-    Event,
-    isPrivate,
-    getPublic
+  Event,
+  isPrivate,
+  getPublic,
+  cloneEvent
 } from 'event';
 import {
-    $_keys,
-    $_length,
-    $_shift,
-    $_pop,
-    $_last,
-    $_ensureArray,
-    $_forEach,
-    $_is,
-    $_delete,
-    $_ensureFunc,
-    $_getHandlerFunc,
-    $_getHandlerContext,
-    $_EVT
+  $_keys,
+  $_length,
+  $_shift,
+  $_pop,
+  $_last,
+  $_ensureArray,
+  $_forEach,
+  $_is,
+  $_delete,
+  $_ensureFunc,
+  $_getHandlerFunc,
+  $_getHandlerContext,
+  $_EVT
 } from 'static/shared';
 
 function indexOfHandler( handlerArray , func ) {
-    return $_ensureArray( handlerArray )
-        .map(function( evtHandler ) {
-            return evtHandler.func;
-        })
-        .indexOf( func );
+  return $_ensureArray( handlerArray )
+    .map(function( evtHandler ) {
+      return evtHandler.func;
+    })
+    .indexOf( func );
 }
 
 function isLockedEvent( type ) {
-    var pvt, keys = $_keys( $_EVT );
-    for (var i = 0; i < $_length( keys ); i++) {
-        pvt = $_EVT[keys[i]];
-        if (pvt === type || getPublic( pvt ) === type) {
-            return true;
-        }
+  var pvt, keys = $_keys( $_EVT );
+  for (var i = 0; i < $_length( keys ); i++) {
+    pvt = $_EVT[keys[i]];
+    if (pvt === type || getPublic( pvt ) === type) {
+      return true;
     }
+  }
 }
 
 export default {
 
-    $once: function() {
+  $once: function() {
 
-        var that = this;
+    var that = this;
 
-        that.__when( arguments , function( evtHandler ) {
-            evtHandler.before = function( event , func ) {
-                that.$enq(function() {
-                    that.__remove( event.type , func );
-                });
-                that.$digest();
-            };
-        });
-
-        that.$digest();
-
-        return that;
-    },
-
-    $when: function() {
-        var that = this;
-        that.__when( arguments );
-        that.$digest();
-        return that;
-    },
-
-    $emit: function( eventType , args , originalEvent ) {
-
-        var that = this;
-
+    that.__when( arguments , function( evtHandler ) {
+      evtHandler.before = function( event , func ) {
         that.$enq(function() {
-
-            eventType = eventType || that.__events;
-
-            $_forEach( eventType , function( type ) {
-
-                var handlers = that.__get( type );
-                var event = originalEvent ? Event.clone( originalEvent , that ) : new Event( that , type );
-                
-                $_forEach( handlers , function( evtHandler ) {
-                    evtHandler.invoke( event , args );
-                });
-
-                if (!isLockedEvent( type )) {
-                    that.$emit( $_EVT.$emit , [ type , [ type , args , event ]]);
-                }
-            });
+          that.__remove( event.type , func );
         });
-
         that.$digest();
+      };
+    });
 
-        return that;
-    },
+    that.$digest();
 
-    $dispel: function( eventType , MOJOHandler , force ) {
+    return that;
+  },
 
-        var that = this;
-        var func = $_getHandlerFunc( MOJOHandler );
+  $when: function() {
+    var that = this;
+    that.__when( arguments );
+    that.$digest();
+    return that;
+  },
 
-        that.$enq(function() {
+  $emit: function( eventType , args , originalEvent ) {
 
-            eventType = eventType || that.__events;
+    var that = this;
 
-            $_forEach( eventType , function( type ) {
-                if (force || !isPrivate( type )) {
-                    that.__remove( type , func , !!force );
-                }
-            });
-        });
+    that.$enq(function() {
 
-        that.$digest();
+      eventType = eventType || that.__events;
 
-        return that;
-    },
+      $_forEach( eventType , function( type ) {
 
-    /*args = [ eventType , [bindArgs] , [MOJOHandler] ]*/
-    __when: function( args , callback ) {
-
-        callback = $_ensureFunc( callback );
-
-        var that = this;
-        var eventType = $_shift( args );
-        var MOJOHandler = $_is( $_last( args ) , 'function' ) || $_is( $_last( args ) , MOJO ) ? $_pop( args ) : that;
-        var bindArgs = args[0];
+        var handlers = that.__get( type );
+        var event = originalEvent ? cloneEvent( originalEvent , that ) : new Event( that , type );
         
-        var func = $_getHandlerFunc( MOJOHandler );
-        var context = $_getHandlerContext( MOJOHandler , func );
-
-        that.$enq(function() {
-            $_forEach( eventType , function( type , i ) {
-                callback(
-                    that.__add( type , func , context , bindArgs )
-                );
-            });
+        $_forEach( handlers , function( evtHandler ) {
+          evtHandler.invoke( event , args );
         });
-    },
-
-    __get: function( eventType ) {
-        var that = this;
-        var handlers = that.handlers;
-        return (eventType ? $_ensureArray( handlers[eventType] ) : handlers);
-    },
-
-    __add: function( type , func , context , args ) {
-        
-        var that = this;
-        var evtHandler = new EventHandler( func , context , args );
-        var handlerArray = that.__get( type );
-
-        handlerArray.push( evtHandler );
-        that.handlers[type] = handlerArray;
 
         if (!isLockedEvent( type )) {
-            that.$emit( $_EVT.$when , [ type , [ type , args , func ]]);
+          that.$emit( $_EVT.$emit , [ type , [ type , args , event ]]);
         }
+      });
+    });
 
-        return evtHandler;
-    },
+    that.$digest();
 
-    __remove: function( type , func , force ) {
+    return that;
+  },
 
-        var that = this;
-        var handlers = that.__get();
-        var handlerArray = that.__get( type );
-        var i = 0, index, evtHandler;
+  $dispel: function( eventType , MOJOHandler , force ) {
 
-        while (i < $_length( handlerArray )) {
-            index = (func ? indexOfHandler( handlerArray , func ) : i);
-            if (index >= 0 && !handlerArray[i].locked) {
-                handlerArray.splice( index , 1 );
-                i--;
-            }
-            i++;
+    var that = this;
+    var func = $_getHandlerFunc( MOJOHandler );
+
+    that.$enq(function() {
+
+      eventType = eventType || that.__events;
+
+      $_forEach( eventType , function( type ) {
+        if (force || !isPrivate( type )) {
+          that.__remove( type , func , !!force );
         }
-        
-        if (!$_length( handlerArray )) {
-            $_delete( handlers , type );
-        }
-        else {
-            handlers[type] = handlerArray;
-        }
+      });
+    });
 
-        if (!isLockedEvent( type )) {
-            that.$emit( $_EVT.$dispel , [ type , [ type , func , force ]]);
-        }
+    that.$digest();
+
+    return that;
+  },
+
+  /*args = [ eventType , [bindArgs] , [MOJOHandler] ]*/
+  __when: function( args , callback ) {
+
+    callback = $_ensureFunc( callback );
+
+    var that = this;
+    var eventType = $_shift( args );
+    var MOJOHandler = $_is( $_last( args ) , 'function' ) || $_is( $_last( args ) , MOJO ) ? $_pop( args ) : that;
+    var bindArgs = args[0];
+    
+    var func = $_getHandlerFunc( MOJOHandler );
+    var context = $_getHandlerContext( MOJOHandler , func );
+
+    that.$enq(function() {
+      $_forEach( eventType , function( type , i ) {
+        callback(
+          that.__add( type , func , context , bindArgs )
+        );
+      });
+    });
+  },
+
+  __get: function( eventType ) {
+    var that = this;
+    var handlers = that.handlers;
+    return (eventType ? $_ensureArray( handlers[eventType] ) : handlers);
+  },
+
+  __add: function( type , func , context , args ) {
+    
+    var that = this;
+    var evtHandler = new EventHandler( func , context , args );
+    var handlerArray = that.__get( type );
+
+    handlerArray.push( evtHandler );
+    that.handlers[type] = handlerArray;
+
+    if (!isLockedEvent( type )) {
+      that.$emit( $_EVT.$when , [ type , [ type , args , func ]]);
     }
+
+    return evtHandler;
+  },
+
+  __remove: function( type , func , force ) {
+
+    var that = this;
+    var handlers = that.__get();
+    var handlerArray = that.__get( type );
+    var i = 0, index, evtHandler;
+
+    while (i < $_length( handlerArray )) {
+      index = (func ? indexOfHandler( handlerArray , func ) : i);
+      if (index >= 0 && !handlerArray[i].locked) {
+        handlerArray.splice( index , 1 );
+        i--;
+      }
+      i++;
+    }
+    
+    if (!$_length( handlerArray )) {
+      $_delete( handlers , type );
+    }
+    else {
+      handlers[type] = handlerArray;
+    }
+
+    if (!isLockedEvent( type )) {
+      that.$emit( $_EVT.$dispel , [ type , [ type , func , force ]]);
+    }
+  }
 };
 
 

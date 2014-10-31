@@ -1,5 +1,8 @@
 node_modules
 tmp
+test/mojo.js
+test/testModules.transpiled.js
+test/heap
 
 # OS generated files #
 ######################
