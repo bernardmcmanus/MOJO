@@ -11,6 +11,7 @@ import {
   $_length,
   $_shift,
   $_pop,
+  $_indexOf,
   $_last,
   $_ensureArray,
   $_forEach,
@@ -23,11 +24,11 @@ import {
 } from 'static/shared';
 
 function indexOfHandler( handlerArray , func ) {
-  return $_ensureArray( handlerArray )
-    .map(function( evtHandler ) {
-      return evtHandler.func;
-    })
-    .indexOf( func );
+  var arr = $_ensureArray( handlerArray )
+  .map(function( evtHandler ) {
+    return evtHandler.func;
+  });
+  return $_indexOf( arr , func );
 }
 
 function isLockedEvent( type ) {

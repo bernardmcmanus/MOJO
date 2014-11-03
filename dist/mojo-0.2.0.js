@@ -1,4 +1,4 @@
-/*! mojo - 0.2.0 - Bernard McManus - es6-transpiler - gf544f6 - 2014-10-31 */
+/*! mojo - 0.2.0 - Bernard McManus - es6-transpiler - g8cae9d - 2014-11-02 */
 
 (function() {
     "use strict";
@@ -85,6 +85,44 @@
 
     function static$shared$$$_has( subject , key ) {
       return subject.hasOwnProperty( key );
+    }
+
+    function static$shared$$$_parseRoute( path ) {
+      return path.split( '.' );
+    }
+
+    function static$shared$$$_ensureBranch( subject , path , action ) {
+      
+      var route = static$shared$$$_parseRoute( path );
+      var lastKey = static$shared$$$_pop( route );
+      
+      static$shared$$$_forEach( route , function( key ) {
+        subject[key] = subject = subject[key] || {};
+      });
+      
+      return function( value ) {
+        
+        /*
+          the following is an abbreviated way of writing:
+          -----------------------------------------------
+          switch (action) {
+            case $_EVT.$set:
+              return subject[lastKey] = value;
+            case $_EVT.$unset:
+              return $_delete( subject , lastKey );
+            default:
+              return (subject || {})[lastKey];
+          }
+        */
+
+        return action === static$shared$$$_EVT.$set ? 
+          subject[lastKey] = value :
+          (
+            action === static$shared$$$_EVT.$unset ?
+              static$shared$$$_delete( subject , lastKey ) :
+              (subject || {})[lastKey]
+          );
+      };
     }
 
     function static$shared$$$_ensureFunc( subject ) {
@@ -228,11 +266,11 @@
     };
 
     function when$$indexOfHandler( handlerArray , func ) {
-      return static$shared$$$_ensureArray( handlerArray )
-        .map(function( evtHandler ) {
-          return evtHandler.func;
-        })
-        .indexOf( func );
+      var arr = static$shared$$$_ensureArray( handlerArray )
+      .map(function( evtHandler ) {
+        return evtHandler.func;
+      });
+      return static$shared$$$_indexOf( arr , func );
     }
 
     function when$$isLockedEvent( type ) {
@@ -396,7 +434,7 @@
 
     var static$construct$$default = function( subject ) {
 
-      var inprog = false, __maxWatchers = 10;
+      var inprog = false, __maxWatchers = 10, watchers = [];
 
       static$shared$$$_defineProperty( subject , '__stack' , {
         value: []
@@ -431,7 +469,12 @@
       });
 
       static$shared$$$_defineProperty( subject , 'watchers' , {
-        value: []
+        get: function() {
+          return watchers;
+        },
+        set: function( value ) {
+          watchers = static$shared$$$_isArray( value ) ? value : [];
+        }
       });
 
       static$shared$$$_defineProperty( subject , static$shared$$$_HANDLE_MOJO , {
@@ -463,7 +506,7 @@
         static$construct$$default( that );
       };
 
-      proto[static$shared$$__$_HANDLE_MOJO] = function() {
+      proto[ static$shared$$__$_HANDLE_MOJO ] = function() {
 
         var that = this;
         var args = static$shared$$$_slice( arguments );
@@ -489,44 +532,64 @@
         }
       };
 
-      proto.$set = function( key , value ) {
+      proto.$get = function( path ) {
         var that = this;
-        that[key] = value;
-        that.$emit( static$shared$$$_EVT.$set , [ key , [ key ]]);
+        return that.__modBranch( null , path );
+      };
+
+      proto.$set = function( path , value ) {
+        var that = this;
+        that.__modBranch( static$shared$$$_EVT.$set , path , value );
+        that.$emit( static$shared$$$_EVT.$set , [ path , [ path ]]);
         return that;
       };
 
-      proto.$unset = function( key ) {
+      proto.$unset = function( path ) {
         var that = this;
-        static$shared$$$_delete( that , key );
-        that.$emit( static$shared$$$_EVT.$unset , [ key , [ key ]]);
+        var target = that.$get( path );
+        if (static$shared$$$_is( target , main$$default )) {
+          target.$deref();
+        }
+        that.__modBranch( static$shared$$$_EVT.$unset , path );
+        that.$emit( static$shared$$$_EVT.$unset , [ path , [ path ]]);
         return that;
       };
 
-      proto.$watch = function( parent ) {
+      proto.$spawn = function( path , seed ) {
+
+        var that = this;
+        var child = new main$$default( seed );
+
+        that
+          .$watch( child )
+          .$set( path , child );
+
+        return child;
+      };
+
+      proto.$watch = function( child ) {
         
         var that = this;
 
-        if (!static$shared$$$_is( parent , main$$default )) {
-          throw new static$shared$$$Error( 'parent must be a MOJO' );
+        if (!static$shared$$$_is( child , main$$default )) {
+          throw new static$shared$$$Error( 'child must be a MOJO' );
         }
 
-        var watchers = parent.watchers;
-        var index = static$shared$$$_indexOf( watchers , that );
+        var childWatchers = child.watchers;
+        var childMax = child.__maxWatchers;
+        var index = static$shared$$$_indexOf( childWatchers , that );
 
         if (index < 0) {
-          watchers.push( that );
+          childWatchers.push( that );
           that.$once( static$shared$$$_EVT.$deref , function( e ) {
-            if (index >= 0) {
-              watchers.splice( index , 1 );
-            }
+            child.$deref();
           });
         }
 
-        if (parent.__maxWatchers) {
-          while (static$shared$$$_length( watchers ) >= parent.__maxWatchers) {
-            //MOJO.log('--- MAX WATCHERS ---',parent.watchers.length);
-            static$shared$$$_shift( watchers ).$deref();
+        if (childMax) {
+          while (static$shared$$$_length( childWatchers ) >= childMax) {
+            //MOJO.log('--- MAX WATCHERS ---',child.watchers.length);
+            static$shared$$$_shift( childWatchers ).$deref();
           }
         }
 
@@ -535,12 +598,9 @@
 
       proto.$deref = function() {
         var that = this;
-        var watchers = that.watchers;
         that.$emit( static$shared$$$_EVT.$deref );
         that.$dispel( null , null , true );
-        while (static$shared$$$_length( watchers )) {
-          static$shared$$$_shift( watchers ).$deref();
-        }
+        that.watchers = [];
       };
 
       proto.$enq = function( task ) {
@@ -573,6 +633,12 @@
           that.__maxWatchers = value;
         }
         return that.__maxWatchers;
+      };
+
+      proto.__modBranch = function( evt , path , value ) {
+        var that = this;
+        var func = static$shared$$$_ensureBranch( that , path , evt );
+        return func( value );
       };
 
       return proto;

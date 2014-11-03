@@ -2,6 +2,7 @@ import {
   $_defineProperty,
   $_keys,
   $_ensureFunc,
+  $_isArray,
   $_forEach,
   $_EVT,
   $_HANDLE_MOJO,
@@ -11,7 +12,7 @@ import {
 
 export default function( subject ) {
 
-  var inprog = false, __maxWatchers = 10;
+  var inprog = false, __maxWatchers = 10, watchers = [];
 
   $_defineProperty( subject , '__stack' , {
     value: []
@@ -46,7 +47,12 @@ export default function( subject ) {
   });
 
   $_defineProperty( subject , 'watchers' , {
-    value: []
+    get: function() {
+      return watchers;
+    },
+    set: function( value ) {
+      watchers = $_isArray( value ) ? value : [];
+    }
   });
 
   $_defineProperty( subject , $_HANDLE_MOJO , {

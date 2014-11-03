@@ -38,6 +38,70 @@
   });
 
   var mojo = new MOJO( SEED );
+
+  describe( '#__modBranch' , function() {
+    it( 'should modify a branch' , function( done ) {
+      
+      // set
+      mojo.$set( 'foo.bar.gnarly' , true );
+      expect( mojo ).to.have.property( 'foo' );
+      expect( mojo.foo ).to.have.property( 'bar' );
+      expect( mojo.foo.bar ).to.have.property( 'gnarly' );
+      expect( mojo.foo.bar.gnarly ).to.equal( true );
+
+      // get
+      expect(
+        mojo.$get( 'foo.bar.gnarly' )
+      )
+      .to.equal( true );
+
+      // unset
+      mojo.$unset( 'foo.bar.gnarly' );
+      expect( mojo.foo.bar ).to.not.have.property( 'gnarly' );
+
+      mojo.$unset( 'foo' );
+      expect( mojo ).to.not.have.property( 'foo' );
+
+      done();
+    });
+  });
+
+  describe( '$spawn' , function() {
+
+    it( 'should spawn a child mojo' , function( done ) {
+      
+      var level1 = mojo.$spawn( 'level1' , { name: 'level1' });
+      var level2 = level1.$spawn( 'level2' , { name: 'level2' });
+      var level3 = mojo.$get( 'level1.level2' ).$spawn( 'level3' , { name: 'level3' });
+
+      [ mojo , level1 , level2 , level3 ].forEach(function( m ) {
+        m.$once([ '$$deref' , '$$rad' , 'rad' ], function( e ) {
+          MOJO.log(
+            e.type + ' -> '
+            + e.currentTarget.name
+            + ' (' + e.target.name + ')'
+          );
+        });
+      });
+
+      level3.$emit( '$$rad' );
+      level2.$deref();
+
+      expect( level3.watchers.length ).to.equal( 0 );
+      expect( level1.watchers.length ).to.equal( 1 );
+
+      mojo.$unset( 'level1' );
+
+      expect( level1.watchers.length ).to.equal( 0 );
+      
+      mojo.$deref();
+      
+      //MOJO.log( level1.watchers );
+      done();
+    });
+  });
+
+  //return;
   
   describe( 'constructor' , function() {
     it( 'should create a new MOJO instance' , function( done ) {
@@ -234,16 +298,16 @@
     var mojoChild2 = new MOJO({ name: 'mojo-child-2' });
     var mojoChild3 = new MOJO({ name: 'mojo-child-3' });
 
-    it( 'should throw an error if parent is not an instance of MOJO' , function( done ) {
+    it( 'should throw an error if child is not an instance of MOJO' , function( done ) {
       expect(function() {
         mojoParent.$watch( {} );
       })
       .to
-      .throw( Error , ( /parent must be a mojo/i ));
+      .throw( Error , ( /child must be a mojo/i ));
       done();
     });
 
-    it( 'should watch a parent for triggered events' , function( done ) {
+    it( 'should watch a child for triggered events' , function( done ) {
 
       mojoParent.$once( 'gnarly' , function( e , data1 , data2 ) {
         expect( e.type ).to.deep.equal( 'gnarly' );

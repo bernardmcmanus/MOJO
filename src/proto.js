@@ -7,6 +7,7 @@ import {
   $_create,
   $_delete,
   $_is,
+  $_ensureBranch,
   $_indexOf,
   $_slice,
   $_shift,
@@ -32,7 +33,7 @@ function Proto() {
     construct( that );
   };
 
-  proto[__$_HANDLE_MOJO] = function() {
+  proto[ __$_HANDLE_MOJO ] = function() {
 
     var that = this;
     var args = $_slice( arguments );
@@ -58,44 +59,64 @@ function Proto() {
     }
   };
 
-  proto.$set = function( key , value ) {
+  proto.$get = function( path ) {
     var that = this;
-    that[key] = value;
-    that.$emit( $_EVT.$set , [ key , [ key ]]);
+    return that.__modBranch( null , path );
+  };
+
+  proto.$set = function( path , value ) {
+    var that = this;
+    that.__modBranch( $_EVT.$set , path , value );
+    that.$emit( $_EVT.$set , [ path , [ path ]]);
     return that;
   };
 
-  proto.$unset = function( key ) {
+  proto.$unset = function( path ) {
     var that = this;
-    $_delete( that , key );
-    that.$emit( $_EVT.$unset , [ key , [ key ]]);
+    var target = that.$get( path );
+    if ($_is( target , MOJO )) {
+      target.$deref();
+    }
+    that.__modBranch( $_EVT.$unset , path );
+    that.$emit( $_EVT.$unset , [ path , [ path ]]);
     return that;
   };
 
-  proto.$watch = function( parent ) {
+  proto.$spawn = function( path , seed ) {
+
+    var that = this;
+    var child = new MOJO( seed );
+
+    that
+      .$watch( child )
+      .$set( path , child );
+
+    return child;
+  };
+
+  proto.$watch = function( child ) {
     
     var that = this;
 
-    if (!$_is( parent , MOJO )) {
-      throw new $Error( 'parent must be a MOJO' );
+    if (!$_is( child , MOJO )) {
+      throw new $Error( 'child must be a MOJO' );
     }
 
-    var watchers = parent.watchers;
-    var index = $_indexOf( watchers , that );
+    var childWatchers = child.watchers;
+    var childMax = child.__maxWatchers;
+    var index = $_indexOf( childWatchers , that );
 
     if (index < 0) {
-      watchers.push( that );
+      childWatchers.push( that );
       that.$once( $_EVT.$deref , function( e ) {
-        if (index >= 0) {
-          watchers.splice( index , 1 );
-        }
+        child.$deref();
       });
     }
 
-    if (parent.__maxWatchers) {
-      while ($_length( watchers ) >= parent.__maxWatchers) {
-        //MOJO.log('--- MAX WATCHERS ---',parent.watchers.length);
-        $_shift( watchers ).$deref();
+    if (childMax) {
+      while ($_length( childWatchers ) >= childMax) {
+        //MOJO.log('--- MAX WATCHERS ---',child.watchers.length);
+        $_shift( childWatchers ).$deref();
       }
     }
 
@@ -104,12 +125,9 @@ function Proto() {
 
   proto.$deref = function() {
     var that = this;
-    var watchers = that.watchers;
     that.$emit( $_EVT.$deref );
     that.$dispel( null , null , true );
-    while ($_length( watchers )) {
-      $_shift( watchers ).$deref();
-    }
+    that.watchers = [];
   };
 
   proto.$enq = function( task ) {
@@ -142,6 +160,12 @@ function Proto() {
       that.__maxWatchers = value;
     }
     return that.__maxWatchers;
+  };
+
+  proto.__modBranch = function( evt , path , value ) {
+    var that = this;
+    var func = $_ensureBranch( that , path , evt );
+    return func( value );
   };
 
   return proto;

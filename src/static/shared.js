@@ -1,3 +1,5 @@
+import MOJO from 'main';
+
 export var $Array = Array;
 export var $Object = Object;
 export var $Date = Date;
@@ -75,6 +77,44 @@ export function $_is( subject , test ) {
 
 export function $_has( subject , key ) {
   return subject.hasOwnProperty( key );
+}
+
+export function $_parseRoute( path ) {
+  return path.split( '.' );
+}
+
+export function $_ensureBranch( subject , path , action ) {
+  
+  var route = $_parseRoute( path );
+  var lastKey = $_pop( route );
+  
+  $_forEach( route , function( key ) {
+    subject[key] = subject = subject[key] || {};
+  });
+  
+  return function( value ) {
+    
+    /*
+      the following is an abbreviated way of writing:
+      -----------------------------------------------
+      switch (action) {
+        case $_EVT.$set:
+          return subject[lastKey] = value;
+        case $_EVT.$unset:
+          return $_delete( subject , lastKey );
+        default:
+          return (subject || {})[lastKey];
+      }
+    */
+
+    return action === $_EVT.$set ? 
+      subject[lastKey] = value :
+      (
+        action === $_EVT.$unset ?
+          $_delete( subject , lastKey ) :
+          (subject || {})[lastKey]
+      );
+  };
 }
 
 export function $_ensureFunc( subject ) {
