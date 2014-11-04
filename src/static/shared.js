@@ -13,9 +13,9 @@ export var $_UNDEFINED;
 export var $_EVT = {
   $set: '$$set',
   $unset: '$$unset',
-  $when: '$$listener.added',
-  $emit: '$$listener.triggered',
-  $dispel: '$$listener.removed',
+  $when: '$$when',
+  $emit: '$$emit',
+  $dispel: '$$dispel',
   $deref: '$$deref'
 };
 

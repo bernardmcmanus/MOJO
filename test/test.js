@@ -39,70 +39,61 @@
 
   var mojo = new MOJO( SEED );
 
-  describe( '#__modBranch' , function() {
-    it( 'should modify a branch' , function( done ) {
-      
-      // set
-      mojo.$set( 'foo.bar.gnarly' , true );
-      expect( mojo ).to.have.property( 'foo' );
-      expect( mojo.foo ).to.have.property( 'bar' );
-      expect( mojo.foo.bar ).to.have.property( 'gnarly' );
-      expect( mojo.foo.bar.gnarly ).to.equal( true );
 
-      // get
-      expect(
-        mojo.$get( 'foo.bar.gnarly' )
-      )
-      .to.equal( true );
+  /*describe( '$watch (memory leak)' , function() {
 
-      // unset
-      mojo.$unset( 'foo.bar.gnarly' );
-      expect( mojo.foo.bar ).to.not.have.property( 'gnarly' );
+    var checker;
 
-      mojo.$unset( 'foo' );
-      expect( mojo ).to.not.have.property( 'foo' );
-
-      done();
-    });
-  });
-
-  describe( '$spawn' , function() {
-
-    it( 'should spawn a child mojo' , function( done ) {
-      
-      var level1 = mojo.$spawn( 'level1' , { name: 'level1' });
-      var level2 = level1.$spawn( 'level2' , { name: 'level2' });
-      var level3 = mojo.$get( 'level1.level2' ).$spawn( 'level3' , { name: 'level3' });
-
-      [ mojo , level1 , level2 , level3 ].forEach(function( m ) {
-        m.$once([ '$$deref' , '$$rad' , 'rad' ], function( e ) {
-          MOJO.log(
-            e.type + ' -> '
-            + e.currentTarget.name
-            + ' (' + e.target.name + ')'
-          );
-        });
+    it( 'getting a baseline' , function( done ) {
+      MLChecker.getBaseline(function( baseline ) {
+        checker = new MLChecker( baseline );
+        done();
       });
+    });
 
-      level3.$emit( '$$rad' );
-      level2.$deref();
+    it( 'should not cause a memory leak when __maxWatchers is default' , function( done ) {
+      checker.good(function() {
+        var randoMojo = new MOJO();
+        randoMojo.$watch( mojo );
+        MOJO.log(mojo.watchers.length);
+      })
+      .then(function( success ) {
+        assert.equal( mojo.watchers.length , mojo.maxWatchers() );
+        assert.ok( success );
+        done();
+      })
+      .catch( done );
+    });
 
-      expect( level3.watchers.length ).to.equal( 0 );
-      expect( level1.watchers.length ).to.equal( 1 );
-
-      mojo.$unset( 'level1' );
-
-      expect( level1.watchers.length ).to.equal( 0 );
-      
+    return;
+    
+    it( 'should cause a memory leak when __maxWatchers is zero' , function( done ) {
+      mojo.maxWatchers( 0 );
+      checker.bad(function() {
+        var randoMojo = new MOJO();
+        randoMojo.$watch( mojo );
+      })
+      .then(function( success ) {
+        assert.ok( success );
+        done();
+      })
+      .catch( done );
+    });
+    
+    it( 'should allow for garbage collection when $deref is called' , function( done ) {
+      mojo.maxWatchers( 10 );
       mojo.$deref();
-      
-      //MOJO.log( level1.watchers );
-      done();
+      checker.good(function(){}).then(function( success ) {
+        assert.ok( success );
+        done();
+      })
+      .catch( done );
     });
   });
 
-  //return;
-  
+  return;*/
+
+
   describe( 'constructor' , function() {
     it( 'should create a new MOJO instance' , function( done ) {
       assert.instanceOf( mojo , MOJO );
@@ -225,6 +216,49 @@
     });
   });
 
+  describe( '$set' , function() {
+    it( 'should emit the ' + TestModules.$_EVT.$set + ' event' , function( done ) {
+      mojo.$once( '$$set' , function( e , path ) {
+        expect( path ).to.equal( 'foo.bar.gnarly' );
+        done();
+      });
+      mojo.$set( 'foo.bar.gnarly' , true );
+    });
+    it( 'should traverse a route and set the value of the destination' , function( done ) {
+      expect( mojo ).to.have.property( 'foo' );
+      expect( mojo.foo ).to.have.property( 'bar' );
+      expect( mojo.foo.bar ).to.have.property( 'gnarly' );
+      expect( mojo.foo.bar.gnarly ).to.equal( true );
+      done();
+    });
+  });
+
+  describe( '$get' , function() {
+    it( 'should traverse a route and return the value of the destination' , function( done ) {
+      expect(
+        mojo.$get( 'foo.bar.gnarly' )
+      )
+      .to.equal( true );
+      done();
+    });
+  });
+
+  describe( '$unset' , function() {
+    it( 'should traverse a route and remove the destination' , function( done ) {
+      mojo.$unset( 'foo.bar.gnarly' );
+      expect( mojo.foo.bar ).to.not.have.property( 'gnarly' );
+      done();
+    });
+    it( 'should emit the ' + TestModules.$_EVT.$unset + ' event' , function( done ) {
+      mojo.$once( '$$unset' , function( e , path ) {
+        expect( path ).to.equal( 'foo' );
+        expect( mojo ).to.not.have.property( 'foo' );
+        done();
+      });
+      mojo.$unset( 'foo' );
+    });
+  });
+
   describe( '$when' , function() {
     it( 'should add an event handler' , function( done ) {
       mojo.$when( 'gnarly' , Test );
@@ -293,14 +327,13 @@
 
   describe( '$watch' , function() {
 
-    var mojoParent = new MOJO({ name: 'mojo-parent' });
-    var mojoChild1 = new MOJO({ name: 'mojo-child-1' });
-    var mojoChild2 = new MOJO({ name: 'mojo-child-2' });
-    var mojoChild3 = new MOJO({ name: 'mojo-child-3' });
+    var child1 = new MOJO({ name: 'child-1' });
+    var child2 = new MOJO({ name: 'child-2' });
+    var child3 = new MOJO({ name: 'child-3' });
 
     it( 'should throw an error if child is not an instance of MOJO' , function( done ) {
       expect(function() {
-        mojoParent.$watch( {} );
+        mojo.$watch( {} );
       })
       .to
       .throw( Error , ( /child must be a mojo/i ));
@@ -309,94 +342,195 @@
 
     it( 'should watch a child for triggered events' , function( done ) {
 
-      mojoParent.$once( 'gnarly' , function( e , data1 , data2 ) {
+      child1.$once( 'gnarly' , function( e , data1 , data2 ) {
         expect( e.type ).to.deep.equal( 'gnarly' );
-        expect( e.target ).to.deep.equal( mojoParent );
-        expect( e.currentTarget ).to.deep.equal( mojoParent );
-        expect( data1 ).to.deep.equal( 'data1' );
-        expect( data2 ).to.deep.equal( 'data2' );
-      });
-
-      mojoChild1.$once( 'gnarly' , function( e , data1 , data2 ) {
-        expect( e.type ).to.deep.equal( 'gnarly' );
-        expect( e.target ).to.deep.equal( mojoParent );
-        expect( e.currentTarget ).to.deep.equal( mojoChild1 );
+        expect( e.target ).to.deep.equal( child1 );
+        expect( e.currentTarget ).to.deep.equal( child1 );
         expect( data1 ).to.deep.equal( 'data1' );
         expect( data2 ).to.deep.equal( 'data2' );
         done();
       });
 
-      mojoChild1.$watch( mojoParent );
-      expect( mojoParent.watchers ).to.include( mojoChild1 );
-      mojoParent.$emit( 'gnarly' , [ 'data1' , 'data2' ]);
+      mojo.$once( 'gnarly' , function( e , data1 , data2 ) {
+        expect( e.type ).to.deep.equal( 'gnarly' );
+        expect( e.target ).to.deep.equal( child1 );
+        expect( e.currentTarget ).to.deep.equal( mojo );
+        expect( data1 ).to.deep.equal( 'data1' );
+        expect( data2 ).to.deep.equal( 'data2' );
+      });
+
+      mojo.$watch( child1 );
+      expect( child1.watchers ).to.include( mojo );
+      child1.$emit( 'gnarly' , [ 'data1' , 'data2' ]);
     });
 
     it( 'should allow events to bubble up the watchers tree' , function( done ) {
 
-      mojoChild2.$once( 'gnarly' , function( e , data1 , data2 ) {
+      mojo.$once( 'gnarly' , function( e , data1 , data2 ) {
         expect( e.type ).to.deep.equal( 'gnarly' );
-        expect( e.target ).to.deep.equal( mojoParent );
-        expect( e.currentTarget ).to.deep.equal( mojoChild2 );
+        expect( e.target ).to.deep.equal( child2 );
+        expect( e.currentTarget ).to.deep.equal( mojo );
         expect( data1 ).to.deep.equal( 'data1' );
         expect( data2 ).to.deep.equal( 'data2' );
         done();
       });
 
-      mojoChild2.$watch( mojoChild1 );
-      expect( mojoChild1.watchers.length ).to.equal( 1 );
-      mojoParent.$emit( 'gnarly' , [ 'data1' , 'data2' ]);
+      child1.$watch( child2 );
+      expect( child2.watchers ).to.include( child1 );
+      expect( child2.watchers.length ).to.equal( 1 );
+      child2.$emit( 'gnarly' , [ 'data1' , 'data2' ]);
     });
 
     it( 'should not allow events to bubble if propagation is stopped' , function( done ) {
 
-      mojoChild3.$when( 'gnarly' , function( e ) {
+      mojo.$when( 'gnarly' , function( e ) {
         assert.ok( false , 'propagation was not stopped' );
       });
 
-      mojoChild1.$once( 'gnarly' , function( e ) {
+      child1.$once( 'gnarly' , function( e ) {
         e.stopPropagation();
       });
 
-      mojoChild3.$watch( mojoChild2 );
-      expect( mojoChild2.watchers.length ).to.equal( 1 );
-      mojoParent.$emit( 'gnarly' );
+      child2.$watch( child3 );
+      expect( child3.watchers ).to.include( child2 );
+      expect( child3.watchers.length ).to.equal( 1 );
+      child3.$emit( 'gnarly' );
 
       async(function() {
-        mojoChild3.$dispel();
+        mojo.$dispel( 'gnarly' );
         done();
       });
     });
 
     it( 'should integrate seamlessly with MOJO.aggregate' , function( done ) {
 
-      MOJO.aggregate([
-        mojoChild1,
-        mojoChild2,
-        mojoChild3
+      var agg = MOJO.aggregate([
+        mojo,
+        child1,
+        child2
       ])
       .$when( 'gnarly' , function( e ) {
-        expect( e.currentTarget ).to.deep.equal( mojoChild1 );
+        expect( e.currentTarget ).to.deep.equal( child2 );
       });
 
-      mojoChild1.$once( 'gnarly' , function( e ) {
+      child2.$once( 'gnarly' , function( e ) {
         e.stopPropagation();
       });
 
-      mojoParent.$emit( 'gnarly' );
+      child3.$emit( 'gnarly' );
 
       async(function() {
+        agg.$dispel();
         done();
       });
     });
 
     it( 'should only allow unique watchers' , function( done ) {
-      mojoChild1.$watch( mojoParent );
-      expect( mojoParent.watchers.length ).to.equal( 1 );
+      mojo.$watch( child1 );
+      expect( child1.watchers.length ).to.equal( 1 );
+      mojo.$deref();
       done();
     });
   });
 
-  describe( '$watch (memory leak)' , function() {
+  describe( '$spawn' , function() {
+
+    var level1, level2, level3
+
+    it( 'should spawn a child mojo' , function( done ) {
+      level1 = mojo.$spawn( 'level1' , { name: 'level1' });
+      level2 = level1.$spawn( 'level2' , { name: 'level2' });
+      level3 = level2.$spawn( 'level3' , { name: 'level3' });
+      expect( mojo ).to.have.property( 'level1' );
+      expect( level1 ).to.have.property( 'level2' );
+      expect( level2 ).to.have.property( 'level3' );
+      done();
+    });
+
+    it( 'should not allow private events to bubble' , function( done ) {
+
+      var targets = [ mojo , level1 , level2 ];
+      var instigator = level3;
+
+      targets.forEach(function( m ) {
+        m.$once( '$$rad' , function( e ) {
+          MOJO.log(e);
+          done();
+        });
+      });
+
+      instigator.$emit( '$$rad' );
+
+      async(function() {
+        targets.forEach(function( m ) {
+          m.$dispel( '$$rad' , null , true );
+        });
+        done();
+      });
+    });
+
+    it( 'should allow public events to bubble from child -> parent' , function( done ) {
+
+      var targets = [ mojo , level1 , level2 , level3 ];
+      var instigator = level3;
+
+      targets.forEach(function( m ) {
+        m.$once( 'rad' , function( e ) {
+          var ct = targets.pop();
+          expect( e.target ).to.equal( instigator );
+          expect( e.currentTarget ).to.equal( ct );
+          if (!targets.length) {
+            done();
+          }
+        });
+      });
+
+      instigator.$emit( 'rad' );
+    });
+
+    it( 'should $deref children when a parent is $deref\'d' , function( done ) {
+
+      var targets = [ level2 , level3 ];
+      var instigator = level2;
+
+      targets.forEach(function( m ) {
+        m.$once( '$$deref' , function( e ) {
+          var target = targets.pop();
+          var len = targets.length;
+          expect( target.watchers.length ).to.equal( 0 );
+          expect( e.target ).to.equal( target );
+          expect( e.currentTarget ).to.equal( target );
+          async(function() {
+            expect(
+              Object.keys( target.handlers ).length
+            )
+            .to.equal(
+              Object.keys( TestModules.$_EVT ).length
+            );
+            Object.keys( TestModules.$_EVT ).forEach(function( key ) {
+              var evt = TestModules.$_EVT[key];
+              expect( target.handlers[evt].length ).to.equal( 1 );
+            });
+            if (!len) {
+              done();
+            }
+          });
+        });
+      });
+
+      instigator.$deref();
+    });
+
+    it( 'should $deref children when $unset is called on a MOJO instance' , function( done ) {
+      mojo.$unset( 'level1' );
+      expect( level1.watchers.length ).to.equal( 0 );
+      expect( mojo.watchers.length ).to.equal( 0 );
+      expect( mojo.handlers[ TestModules.$_EVT.$deref ].length ).to.equal( 1 );
+      done();
+    });
+  });
+
+  /*describe( '$watch (memory leak)' , function() {
 
     var checker;
 
@@ -441,7 +575,7 @@
       })
       .catch( done );
     });
-  });
+  });*/
 
   describe( 'MOJO.create' , function() {
     it( 'should create a new object that extends the MOJO prototype' , function( done ) {
@@ -545,7 +679,7 @@
     
     var Event = TestModules.Event;
     
-    describe( '.isPrivate' , function() {
+    describe( '#isPrivate' , function() {
       it( 'should determine whether an event string is designated as private' , function( done ) {
         assert.ok(
           Event.isPrivate( '$$listener' )
@@ -571,7 +705,7 @@
         done();
       });
     });
-    describe( '.getPublic' , function() {
+    describe( '#getPublic' , function() {
       it( 'should publicize a private event string' , function( done ) {
         [
           '$$listener',
@@ -643,71 +777,75 @@
       mojo.$dispel( 'gnarly' );
     });
     
-    describe( '$$listener' , function() {
-      
-      var events = [ 'gnarly' , 'rad' ];
+    var events = [ 'gnarly' , 'rad' ];
+    var lastEvent = events.slice( 0 ).pop();
 
-      describe( '.added' , function() {
-        it( 'should be triggered when an event listener is added' , function( done ) {
-          mojo.$once( '$$listener.added' , function( e , type , args ) {
-            expect( events ).to.include( type );
-            expect( mojo.handlers ).to.have.property( type );
-          });
-          mojo.$when( events , Test );
-          done();
+    describe( TestModules.$_EVT.$when , function() {
+      it( 'should be triggered when .$when is called' , function( done ) {
+        mojo.$once( TestModules.$_EVT.$when , function( e , type , args ) {
+          expect( events ).to.include( type );
+          expect( mojo.handlers ).to.have.property( type );
+          if (type === lastEvent) {
+            done();
+          }
         });
+        mojo.$when( events , Test );
       });
+    });
 
-      describe( '.triggered' , function() {
-        it( 'should be triggered when an event is emitted' , function( done ) {
-          mojo.$once( '$$listener.triggered' , function( e , type , args ) {
-            expect( events ).to.include( type );
-          });
-          mojo.$emit([ 'gnarly' , 'rad' ]);
-          done();
+    describe( TestModules.$_EVT.$emit , function() {
+      it( 'should be triggered when .$emit is called' , function( done ) {
+        mojo.$once( TestModules.$_EVT.$emit , function( e , type , args ) {
+          expect( events ).to.include( type );
+          if (type === lastEvent) {
+            done();
+          }
         });
+        mojo.$emit( events );
       });
+    });
 
-      describe( '.removed' , function() {
-        it( 'should be triggered when an event listener is removed' , function( done ) {
-          mojo.$once( '$$listener.removed' , function( e , type ) {
-            expect( events ).to.include( type );
-            expect( mojo.handlers ).to.not.have.property( type );
-          });
-          mojo.$dispel( events , Test );
-          done();
+    describe( TestModules.$_EVT.$dispel , function() {
+      it( 'should be triggered when .$dispel is called' , function( done ) {
+        mojo.$once( TestModules.$_EVT.$dispel , function( e , type ) {
+          expect( events ).to.include( type );
+          expect( mojo.handlers ).to.not.have.property( type );
+          if (type === lastEvent) {
+            done();
+          }
         });
+        mojo.$dispel( events , Test );
       });
     });
 
     describe( '$$set' , function() {
       it( 'should be triggered when .$set is called' , function( done ) {
-        mojo.$once( '$$set' , function( e , key , args ) {
-          expect( key ).to.equal( 'gnarly' );
+        mojo.$once( '$$set' , function( e , path , args ) {
+          expect( path ).to.equal( 'gnarly' );
           expect( args ).to.include( 'gnarly' );
           expect( mojo ).to.have.property( 'gnarly' );
           expect( mojo.gnarly ).to.equal( 'rad' );
         });
-        mojo.$once( 'set' , function( e , key ) {
-          expect( key ).to.equal( 'gnarly' );
+        mojo.$once( 'set' , function( e , path ) {
+          expect( path ).to.equal( 'gnarly' );
+          done();
         });
         mojo.$set( 'gnarly' , 'rad' );
-        done();
       });
     });
 
     describe( '$$unset' , function() {
       it( 'should be triggered when .$unset is called' , function( done ) {
-        mojo.$once( '$$unset' , function( e , key , args ) {
-          expect( key ).to.equal( 'gnarly' );
+        mojo.$once( '$$unset' , function( e , path , args ) {
+          expect( path ).to.equal( 'gnarly' );
           expect( args ).to.include( 'gnarly' );
           expect( mojo ).to.not.have.property( 'gnarly' );
         });
-        mojo.$once( 'unset' , function( e , key ) {
-          expect( key ).to.equal( 'gnarly' );
+        mojo.$once( 'unset' , function( e , path ) {
+          expect( path ).to.equal( 'gnarly' );
+          done();
         });
         mojo.$unset( 'gnarly' );
-        done();
       });
     });
   });

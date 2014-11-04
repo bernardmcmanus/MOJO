@@ -106,15 +106,22 @@ function Proto() {
     var childMax = child.__maxWatchers;
     var index = $_indexOf( childWatchers , that );
 
+    function onParentDeref() {
+      child.$deref();
+    }
+
+    function onChildDeref() {
+      that.$dispel( $_EVT.$deref , onParentDeref , true );
+    }
+
     if (index < 0) {
       childWatchers.push( that );
-      that.$once( $_EVT.$deref , function( e ) {
-        child.$deref();
-      });
+      that.$once( $_EVT.$deref , onParentDeref );
+      child.$once( $_EVT.$deref , onChildDeref );
     }
 
     if (childMax) {
-      while ($_length( childWatchers ) >= childMax) {
+      while ($_length( childWatchers ) > childMax) {
         //MOJO.log('--- MAX WATCHERS ---',child.watchers.length);
         $_shift( childWatchers ).$deref();
       }
@@ -125,9 +132,12 @@ function Proto() {
 
   proto.$deref = function() {
     var that = this;
+    //that.$enq(function() {
+      that.watchers = [];
+    //});
     that.$emit( $_EVT.$deref );
     that.$dispel( null , null , true );
-    that.watchers = [];
+    //that.$digest();
   };
 
   proto.$enq = function( task ) {

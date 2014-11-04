@@ -1,4 +1,4 @@
-/*! mojo - 0.2.0 - Bernard McManus - es6-transpiler - g8cae9d - 2014-11-02 */
+/*! mojo - 0.2.0 - Bernard McManus - es6-transpiler - g256453 - 2014-11-04 */
 
 (function() {
     "use strict";
@@ -21,9 +21,9 @@
     var static$shared$$$_EVT = {
       $set: '$$set',
       $unset: '$$unset',
-      $when: '$$listener.added',
-      $emit: '$$listener.triggered',
-      $dispel: '$$listener.removed',
+      $when: '$$when',
+      $emit: '$$emit',
+      $dispel: '$$dispel',
       $deref: '$$deref'
     };
 
@@ -579,15 +579,22 @@
         var childMax = child.__maxWatchers;
         var index = static$shared$$$_indexOf( childWatchers , that );
 
+        function onParentDeref() {
+          child.$deref();
+        }
+
+        function onChildDeref() {
+          that.$dispel( static$shared$$$_EVT.$deref , onParentDeref , true );
+        }
+
         if (index < 0) {
           childWatchers.push( that );
-          that.$once( static$shared$$$_EVT.$deref , function( e ) {
-            child.$deref();
-          });
+          that.$once( static$shared$$$_EVT.$deref , onParentDeref );
+          child.$once( static$shared$$$_EVT.$deref , onChildDeref );
         }
 
         if (childMax) {
-          while (static$shared$$$_length( childWatchers ) >= childMax) {
+          while (static$shared$$$_length( childWatchers ) > childMax) {
             //MOJO.log('--- MAX WATCHERS ---',child.watchers.length);
             static$shared$$$_shift( childWatchers ).$deref();
           }
@@ -598,9 +605,12 @@
 
       proto.$deref = function() {
         var that = this;
+        //that.$enq(function() {
+          that.watchers = [];
+        //});
         that.$emit( static$shared$$$_EVT.$deref );
         that.$dispel( null , null , true );
-        that.watchers = [];
+        //that.$digest();
       };
 
       proto.$enq = function( task ) {
