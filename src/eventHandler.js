@@ -9,6 +9,7 @@ export default function( func , context , bindArgs ) {
 
   that.func = func;
   that.locked = false;
+  that.active = true;
   that.before = function() {};
   that.after = function() {};
 
@@ -16,7 +17,7 @@ export default function( func , context , bindArgs ) {
 
   that.invoke = function( event , invArgs ) {
     
-    if (event.cancelBubble) {
+    if (!that.active || event.cancelBubble) {
       return;
     }
 

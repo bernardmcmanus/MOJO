@@ -1,4 +1,4 @@
-import MOJO from 'main';
+import $MOJO from 'main';
 import { isPrivate , getPublic } from 'event';
 import when from 'when';
 import construct from 'static/construct';
@@ -40,9 +40,7 @@ function Proto() {
     var e = $_shift( args );
     var type = $_shift( args );
     var pubArgs = $_pop( args );
-    var shouldEmit = (getPublic( e.type ) !== type);
-
-    //MOJO.log(e.type + ' -> ' + type);
+    var shouldEmit = (type && getPublic( e.type ) !== type);
 
     if (shouldEmit) {
       that.$emit( getPublic( e.type ) , pubArgs );
@@ -74,7 +72,7 @@ function Proto() {
   proto.$unset = function( path ) {
     var that = this;
     var target = that.$get( path );
-    if ($_is( target , MOJO )) {
+    if ($_is( target , $MOJO )) {
       target.$deref();
     }
     that.__modBranch( $_EVT.$unset , path );
@@ -85,7 +83,7 @@ function Proto() {
   proto.$spawn = function( path , seed ) {
 
     var that = this;
-    var child = new MOJO( seed );
+    var child = new $MOJO( seed );
 
     that
       .$watch( child )
@@ -98,8 +96,8 @@ function Proto() {
     
     var that = this;
 
-    if (!$_is( child , MOJO )) {
-      throw new $Error( 'child must be a MOJO' );
+    if (!$_is( child , $MOJO )) {
+      throw new $Error( 'child must be a $MOJO' );
     }
 
     var childWatchers = child.watchers;
@@ -114,17 +112,10 @@ function Proto() {
       that.$dispel( $_EVT.$deref , onParentDeref , true );
     }
 
-    if (index < 0) {
+    if (index < 0 && (!childMax || $_length( childWatchers ) < childMax)) {
       childWatchers.push( that );
       that.$once( $_EVT.$deref , onParentDeref );
       child.$once( $_EVT.$deref , onChildDeref );
-    }
-
-    if (childMax) {
-      while ($_length( childWatchers ) > childMax) {
-        //MOJO.log('--- MAX WATCHERS ---',child.watchers.length);
-        $_shift( childWatchers ).$deref();
-      }
     }
 
     return that;
@@ -132,12 +123,9 @@ function Proto() {
 
   proto.$deref = function() {
     var that = this;
-    //that.$enq(function() {
-      that.watchers = [];
-    //});
+    that.watchers = [];
     that.$emit( $_EVT.$deref );
     that.$dispel( null , null , true );
-    //that.$digest();
   };
 
   proto.$enq = function( task ) {
@@ -151,7 +139,6 @@ function Proto() {
     var stack = that.__stack;
 
     if (that.__inprog) {
-      //MOJO.log('--- INPROG ---',stack.length);
       return;
     }
 

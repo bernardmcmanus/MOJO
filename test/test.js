@@ -10,12 +10,12 @@
   var expect = chai.expect;
 
 
-  var MOJO = require( './mojo.js' );
+  var $MOJO = require( './mojo.js' );
   var TestModules = require( './testModules.transpiled.js' );
   var MLChecker = require( './memleakChecker' );
 
 
-  MOJO.log = function() {
+  $MOJO.log = function() {
     var args = Array.prototype.map.call( arguments , function( arg ) {
       return util.inspect( arg , { depth: null , colors: true });
     });
@@ -29,74 +29,20 @@
   function Test3(){}
 
   function GNARLY() {
-    MOJO.construct( this );
+    $MOJO.construct( this );
   }
 
-  GNARLY.prototype = MOJO.create({
+  GNARLY.prototype = $MOJO.create({
     tubes: function() {},
     handleMOJO: function() {}
   });
 
-  var mojo = new MOJO( SEED );
-
-
-  /*describe( '$watch (memory leak)' , function() {
-
-    var checker;
-
-    it( 'getting a baseline' , function( done ) {
-      MLChecker.getBaseline(function( baseline ) {
-        checker = new MLChecker( baseline );
-        done();
-      });
-    });
-
-    it( 'should not cause a memory leak when __maxWatchers is default' , function( done ) {
-      checker.good(function() {
-        var randoMojo = new MOJO();
-        randoMojo.$watch( mojo );
-        MOJO.log(mojo.watchers.length);
-      })
-      .then(function( success ) {
-        assert.equal( mojo.watchers.length , mojo.maxWatchers() );
-        assert.ok( success );
-        done();
-      })
-      .catch( done );
-    });
-
-    return;
-    
-    it( 'should cause a memory leak when __maxWatchers is zero' , function( done ) {
-      mojo.maxWatchers( 0 );
-      checker.bad(function() {
-        var randoMojo = new MOJO();
-        randoMojo.$watch( mojo );
-      })
-      .then(function( success ) {
-        assert.ok( success );
-        done();
-      })
-      .catch( done );
-    });
-    
-    it( 'should allow for garbage collection when $deref is called' , function( done ) {
-      mojo.maxWatchers( 10 );
-      mojo.$deref();
-      checker.good(function(){}).then(function( success ) {
-        assert.ok( success );
-        done();
-      })
-      .catch( done );
-    });
-  });
-
-  return;*/
+  var mojo = new $MOJO( SEED );
 
 
   describe( 'constructor' , function() {
-    it( 'should create a new MOJO instance' , function( done ) {
-      assert.instanceOf( mojo , MOJO );
+    it( 'should create a new $MOJO instance' , function( done ) {
+      assert.instanceOf( mojo , $MOJO );
       done();
     });
   });
@@ -112,7 +58,7 @@
       );
       done();
     });
-    it( 'should inherit no enumerable properties when mojo is created with MOJO.create / MOJO.construct' , function( done ) {
+    it( 'should inherit no enumerable properties when mojo is created with $MOJO.create / $MOJO.construct' , function( done ) {
       var mojoIsh = new GNARLY();
       var keys = [];
       for (var key in mojoIsh) {
@@ -327,16 +273,16 @@
 
   describe( '$watch' , function() {
 
-    var child1 = new MOJO({ name: 'child-1' });
-    var child2 = new MOJO({ name: 'child-2' });
-    var child3 = new MOJO({ name: 'child-3' });
+    var child1 = new $MOJO({ name: 'child-1' });
+    var child2 = new $MOJO({ name: 'child-2' });
+    var child3 = new $MOJO({ name: 'child-3' });
 
-    it( 'should throw an error if child is not an instance of MOJO' , function( done ) {
+    it( 'should throw an error if child is not an instance of $MOJO' , function( done ) {
       expect(function() {
         mojo.$watch( {} );
       })
       .to
-      .throw( Error , ( /child must be a mojo/i ));
+      .throw( Error , ( /child must be a \$mojo/i ));
       done();
     });
 
@@ -402,9 +348,9 @@
       });
     });
 
-    it( 'should integrate seamlessly with MOJO.aggregate' , function( done ) {
+    it( 'should integrate seamlessly with $MOJO.aggregate' , function( done ) {
 
-      var agg = MOJO.aggregate([
+      var agg = $MOJO.aggregate([
         mojo,
         child1,
         child2
@@ -435,7 +381,7 @@
 
   describe( '$spawn' , function() {
 
-    var level1, level2, level3
+    var level1, level2, level3;
 
     it( 'should spawn a child mojo' , function( done ) {
       level1 = mojo.$spawn( 'level1' , { name: 'level1' });
@@ -454,7 +400,6 @@
 
       targets.forEach(function( m ) {
         m.$once( '$$rad' , function( e ) {
-          MOJO.log(e);
           done();
         });
       });
@@ -521,7 +466,7 @@
       instigator.$deref();
     });
 
-    it( 'should $deref children when $unset is called on a MOJO instance' , function( done ) {
+    it( 'should $deref children when $unset is called on a $MOJO instance' , function( done ) {
       mojo.$unset( 'level1' );
       expect( level1.watchers.length ).to.equal( 0 );
       expect( mojo.watchers.length ).to.equal( 0 );
@@ -530,7 +475,7 @@
     });
   });
 
-  /*describe( '$watch (memory leak)' , function() {
+  describe( '$watch (memory leak)' , function() {
 
     var checker;
 
@@ -543,20 +488,21 @@
 
     it( 'should not cause a memory leak when __maxWatchers is default' , function( done ) {
       checker.good(function() {
-        var randoMojo = new MOJO();
+        var randoMojo = new $MOJO();
         randoMojo.$watch( mojo );
       })
       .then(function( success ) {
+        assert.equal( mojo.watchers.length , mojo.maxWatchers() );
         assert.ok( success );
         done();
       })
       .catch( done );
     });
     
-    it( 'should cause a memory leak when __maxWatchers is zero' , function( done ) {
+    it( 'should cause a memory leak when __maxWatchers is unlimited' , function( done ) {
       mojo.maxWatchers( 0 );
       checker.bad(function() {
-        var randoMojo = new MOJO();
+        var randoMojo = new $MOJO();
         randoMojo.$watch( mojo );
       })
       .then(function( success ) {
@@ -570,21 +516,22 @@
       mojo.maxWatchers( 10 );
       mojo.$deref();
       checker.good(function(){}).then(function( success ) {
+        assert.equal( mojo.watchers.length , 0 );
         assert.ok( success );
         done();
       })
       .catch( done );
     });
-  });*/
+  });
 
-  describe( 'MOJO.create' , function() {
-    it( 'should create a new object that extends the MOJO prototype' , function( done ) {
-      for (var key in MOJO.prototype) {
+  describe( '$MOJO.create' , function() {
+    it( 'should create a new object that extends the $MOJO prototype' , function( done ) {
+      for (var key in $MOJO.prototype) {
         if (key === 'handleMOJO') {
-          expect( GNARLY.prototype[key] ).to.not.equal( MOJO.prototype[key] );
+          expect( GNARLY.prototype[key] ).to.not.equal( $MOJO.prototype[key] );
         }
         else {
-          expect( GNARLY.prototype[key] ).to.equal( MOJO.prototype[key] );
+          expect( GNARLY.prototype[key] ).to.equal( $MOJO.prototype[key] );
         }
       }
       expect( GNARLY.prototype ).to.include.keys( 'tubes' );
@@ -593,8 +540,8 @@
     });
   });
 
-  describe( 'MOJO.construct' , function() {
-    it( 'should define required properties for an instance created with MOJO' , function( done ) {
+  describe( '$MOJO.construct' , function() {
+    it( 'should define required properties for an instance created with $MOJO' , function( done ) {
       var gnarly = new GNARLY();
       expect( gnarly.tubes ).to.be.a( 'function' );
       expect( gnarly.handleMOJO ).to.be.a( 'function' );
@@ -614,13 +561,13 @@
     });
   });
 
-  describe( 'MOJO.aggregate' , function() {
+  describe( '$MOJO.aggregate' , function() {
 
     var mojos = [ 0 , 1 , 2 , 3 ].map(function( i ) {
-      return new MOJO({ name: 'mojo-' + i });
+      return new $MOJO({ name: 'mojo-' + i });
     });
 
-    var aggregator = MOJO.aggregate( mojos );
+    var aggregator = $MOJO.aggregate( mojos );
 
     it( 'should aggregate mojos[i].$when' , function( done ) {
       var n = -1;
@@ -744,15 +691,6 @@
 
   describe( 'Private Events' , function() {
 
-    it( 'should never be removed if locked' , function( done ) {
-      mojo.$dispel( null , null , true );
-      Object.keys( TestModules.$_EVT ).forEach(function( key ) {
-        var type = TestModules.$_EVT[key];
-        expect( mojo.handlers ).to.have.property( type );
-      });
-      done();
-    });
-
     it( 'should not be removed when dispel is called' , function( done ) {
       mojo.$when( '$$gnarly' , Test );
       mojo.$dispel();
@@ -776,16 +714,29 @@
       mojo.$emit( '$$gnarly' , [ 'data1' , 'data2' ]);
       mojo.$dispel( 'gnarly' );
     });
-    
+  });
+
+  describe( 'Locked Events' , function() {
+
     var events = [ 'gnarly' , 'rad' ];
     var lastEvent = events.slice( 0 ).pop();
 
+    it( 'should never be removed' , function( done ) {
+      mojo.$dispel( null , null , true );
+      Object.keys( TestModules.$_EVT ).forEach(function( key ) {
+        var type = TestModules.$_EVT[key];
+        expect( mojo.handlers ).to.have.property( type );
+      });
+      done();
+    });
+
     describe( TestModules.$_EVT.$when , function() {
       it( 'should be triggered when .$when is called' , function( done ) {
-        mojo.$once( TestModules.$_EVT.$when , function( e , type , args ) {
+        mojo.$when( TestModules.$_EVT.$when , function( e , type , args ) {
           expect( events ).to.include( type );
           expect( mojo.handlers ).to.have.property( type );
           if (type === lastEvent) {
+            mojo.$dispel( TestModules.$_EVT.$when , null , true );
             done();
           }
         });
@@ -795,9 +746,10 @@
 
     describe( TestModules.$_EVT.$emit , function() {
       it( 'should be triggered when .$emit is called' , function( done ) {
-        mojo.$once( TestModules.$_EVT.$emit , function( e , type , args ) {
+        mojo.$when( TestModules.$_EVT.$emit , function( e , type , args ) {
           expect( events ).to.include( type );
           if (type === lastEvent) {
+            mojo.$dispel( TestModules.$_EVT.$emit , null , true );
             done();
           }
         });
@@ -807,10 +759,11 @@
 
     describe( TestModules.$_EVT.$dispel , function() {
       it( 'should be triggered when .$dispel is called' , function( done ) {
-        mojo.$once( TestModules.$_EVT.$dispel , function( e , type ) {
+        mojo.$when( TestModules.$_EVT.$dispel , function( e , type ) {
           expect( events ).to.include( type );
           expect( mojo.handlers ).to.not.have.property( type );
           if (type === lastEvent) {
+            mojo.$dispel( TestModules.$_EVT.$dispel , null , true );
             done();
           }
         });

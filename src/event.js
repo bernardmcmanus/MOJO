@@ -2,7 +2,9 @@ import {
   $Date,
   $_keys,
   $_create,
+  $_length,
   $_forEach,
+  $_EVT,
   $_PROTO
 } from 'static/shared';
 
@@ -51,6 +53,17 @@ export function cloneEvent( originalEvent , currentTarget ) {
   event[CURRENT_TARGET] = currentTarget;
 
   return event;
+}
+
+
+export function isLocked( type ) {
+  var pvt, keys = $_keys( $_EVT );
+  for (var i = 0; i < $_length( keys ); i++) {
+    pvt = $_EVT[keys[i]];
+    if (pvt === type || getPublic( pvt ) === type) {
+      return true;
+    }
+  }
 }
 
 

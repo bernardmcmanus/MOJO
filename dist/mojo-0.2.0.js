@@ -1,4 +1,4 @@
-/*! mojo - 0.2.0 - Bernard McManus - es6-transpiler - g256453 - 2014-11-04 */
+/*! mojo - 0.2.0 - Bernard McManus - es6-transpiler - g5ac089 - 2014-11-05 */
 
 (function() {
     "use strict";
@@ -210,6 +210,17 @@
     }
 
 
+    function event$$isLocked( type ) {
+      var pvt, keys = static$shared$$$_keys( static$shared$$$_EVT );
+      for (var i = 0; i < static$shared$$$_length( keys ); i++) {
+        pvt = static$shared$$$_EVT[keys[i]];
+        if (pvt === type || event$$getPublic( pvt ) === type) {
+          return true;
+        }
+      }
+    }
+
+
     function event$$isPrivate( type ) {
       return event$$PRIVATE_REGEXP.test( type );
     }
@@ -243,6 +254,7 @@
 
       that.func = func;
       that.locked = false;
+      that.active = true;
       that.before = function() {};
       that.after = function() {};
 
@@ -250,7 +262,7 @@
 
       that.invoke = function( event , invArgs ) {
         
-        if (event.cancelBubble) {
+        if (!that.active || event.cancelBubble) {
           return;
         }
 
@@ -273,16 +285,6 @@
       return static$shared$$$_indexOf( arr , func );
     }
 
-    function when$$isLockedEvent( type ) {
-      var pvt, keys = static$shared$$$_keys( static$shared$$$_EVT );
-      for (var i = 0; i < static$shared$$$_length( keys ); i++) {
-        pvt = static$shared$$$_EVT[keys[i]];
-        if (pvt === type || event$$getPublic( pvt ) === type) {
-          return true;
-        }
-      }
-    }
-
     var when$$default = {
 
       $once: function() {
@@ -295,6 +297,9 @@
               that.__remove( event.type , func );
             });
             that.$digest();
+          };
+          evtHandler.after = function() {
+            evtHandler.active = false;
           };
         });
 
@@ -327,7 +332,7 @@
               evtHandler.invoke( event , args );
             });
 
-            if (!when$$isLockedEvent( type )) {
+            if (!event$$isLocked( type )) {
               that.$emit( static$shared$$$_EVT.$emit , [ type , [ type , args , event ]]);
             }
           });
@@ -396,7 +401,7 @@
         handlerArray.push( evtHandler );
         that.handlers[type] = handlerArray;
 
-        if (!when$$isLockedEvent( type )) {
+        if (!event$$isLocked( type )) {
           that.$emit( static$shared$$$_EVT.$when , [ type , [ type , args , func ]]);
         }
 
@@ -426,7 +431,7 @@
           handlers[type] = handlerArray;
         }
 
-        if (!when$$isLockedEvent( type )) {
+        if (!event$$isLocked( type )) {
           that.$emit( static$shared$$$_EVT.$dispel , [ type , [ type , func , force ]]);
         }
       }
@@ -513,9 +518,7 @@
         var e = static$shared$$$_shift( args );
         var type = static$shared$$$_shift( args );
         var pubArgs = static$shared$$$_pop( args );
-        var shouldEmit = (event$$getPublic( e.type ) !== type);
-
-        //MOJO.log(e.type + ' -> ' + type);
+        var shouldEmit = (type && event$$getPublic( e.type ) !== type);
 
         if (shouldEmit) {
           that.$emit( event$$getPublic( e.type ) , pubArgs );
@@ -572,7 +575,7 @@
         var that = this;
 
         if (!static$shared$$$_is( child , main$$default )) {
-          throw new static$shared$$$Error( 'child must be a MOJO' );
+          throw new static$shared$$$Error( 'child must be a $MOJO' );
         }
 
         var childWatchers = child.watchers;
@@ -587,17 +590,10 @@
           that.$dispel( static$shared$$$_EVT.$deref , onParentDeref , true );
         }
 
-        if (index < 0) {
+        if (index < 0 && (!childMax || static$shared$$$_length( childWatchers ) < childMax)) {
           childWatchers.push( that );
           that.$once( static$shared$$$_EVT.$deref , onParentDeref );
           child.$once( static$shared$$$_EVT.$deref , onChildDeref );
-        }
-
-        if (childMax) {
-          while (static$shared$$$_length( childWatchers ) > childMax) {
-            //MOJO.log('--- MAX WATCHERS ---',child.watchers.length);
-            static$shared$$$_shift( childWatchers ).$deref();
-          }
         }
 
         return that;
@@ -605,12 +601,9 @@
 
       proto.$deref = function() {
         var that = this;
-        //that.$enq(function() {
-          that.watchers = [];
-        //});
+        that.watchers = [];
         that.$emit( static$shared$$$_EVT.$deref );
         that.$dispel( null , null , true );
-        //that.$digest();
       };
 
       proto.$enq = function( task ) {
@@ -624,7 +617,6 @@
         var stack = that.__stack;
 
         if (that.__inprog) {
-          //MOJO.log('--- INPROG ---',stack.length);
           return;
         }
 
@@ -715,7 +707,7 @@
       module.exports = $$index$$default;
     }
     else if (typeof this !== 'undefined') {
-      this.MOJO = $$index$$default;
+      this.$MOJO = $$index$$default;
     }
 }).call(this);
 

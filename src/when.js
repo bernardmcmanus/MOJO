@@ -1,13 +1,12 @@
-import MOJO from 'main';
+import $MOJO from 'main';
 import EventHandler from 'eventHandler';
 import {
   Event,
   isPrivate,
-  getPublic,
+  isLocked,
   cloneEvent
 } from 'event';
 import {
-  $_keys,
   $_length,
   $_shift,
   $_pop,
@@ -31,16 +30,6 @@ function indexOfHandler( handlerArray , func ) {
   return $_indexOf( arr , func );
 }
 
-function isLockedEvent( type ) {
-  var pvt, keys = $_keys( $_EVT );
-  for (var i = 0; i < $_length( keys ); i++) {
-    pvt = $_EVT[keys[i]];
-    if (pvt === type || getPublic( pvt ) === type) {
-      return true;
-    }
-  }
-}
-
 export default {
 
   $once: function() {
@@ -53,6 +42,9 @@ export default {
           that.__remove( event.type , func );
         });
         that.$digest();
+      };
+      evtHandler.after = function() {
+        evtHandler.active = false;
       };
     });
 
@@ -85,7 +77,7 @@ export default {
           evtHandler.invoke( event , args );
         });
 
-        if (!isLockedEvent( type )) {
+        if (!isLocked( type )) {
           that.$emit( $_EVT.$emit , [ type , [ type , args , event ]]);
         }
       });
@@ -124,7 +116,7 @@ export default {
 
     var that = this;
     var eventType = $_shift( args );
-    var MOJOHandler = $_is( $_last( args ) , 'function' ) || $_is( $_last( args ) , MOJO ) ? $_pop( args ) : that;
+    var MOJOHandler = $_is( $_last( args ) , 'function' ) || $_is( $_last( args ) , $MOJO ) ? $_pop( args ) : that;
     var bindArgs = args[0];
     
     var func = $_getHandlerFunc( MOJOHandler );
@@ -154,7 +146,7 @@ export default {
     handlerArray.push( evtHandler );
     that.handlers[type] = handlerArray;
 
-    if (!isLockedEvent( type )) {
+    if (!isLocked( type )) {
       that.$emit( $_EVT.$when , [ type , [ type , args , func ]]);
     }
 
@@ -184,7 +176,7 @@ export default {
       handlers[type] = handlerArray;
     }
 
-    if (!isLockedEvent( type )) {
+    if (!isLocked( type )) {
       that.$emit( $_EVT.$dispel , [ type , [ type , func , force ]]);
     }
   }

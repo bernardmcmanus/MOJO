@@ -4,8 +4,7 @@
   "description": "The Modern JavaScript Object",
   "main": "dist/mojo-0.2.0.min.js",
   "scripts": {
-    "test": "mocha test/test.js",
-    "test-memleak": "mocha test/memleak-test.js"
+    "test": "mocha test/test.js"
   },
   "devDependencies": {
     
@@ -34,9 +33,10 @@
   },
   "keywords": [
     "javascript",
-    "data",
+    "event",
     "object",
-    "event"
+    "model",
+    "data"
   ],
   "author": {
     "name": "Bernard McManus",

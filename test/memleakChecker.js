@@ -13,8 +13,8 @@ module.exports = (function() {
   function MemLeakChecker( baseline ) {
     var that = this;
     that.baseline = baseline;
-    that.tolerance = 5000000;
-    that.iterations = 1000;
+    that.tolerance = 500000;
+    that.iterations = 300;
   }
 
 

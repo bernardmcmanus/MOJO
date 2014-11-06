@@ -1,5 +1,3 @@
-import MOJO from 'main';
-
 export var $Array = Array;
 export var $Object = Object;
 export var $Date = Date;
