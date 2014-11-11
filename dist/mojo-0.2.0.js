@@ -1,4 +1,4 @@
-/*! mojo - 0.2.0 - Bernard McManus - es6-transpiler - g5ac089 - 2014-11-05 */
+/*! mojo - 0.2.0 - Bernard McManus - es6-transpiler - g30366e - 2014-11-11 */
 
 (function() {
     "use strict";
@@ -255,6 +255,7 @@
       that.func = func;
       that.locked = false;
       that.active = true;
+      that.events = [];
       that.before = function() {};
       that.after = function() {};
 
@@ -277,6 +278,10 @@
       };
     };
 
+    var static$isMOJO$$default = function( subject ) {
+      return static$shared$$$_is( subject , 'object' ) && static$shared$$__$_HANDLE_MOJO in subject;
+    };
+
     function when$$indexOfHandler( handlerArray , func ) {
       var arr = static$shared$$$_ensureArray( handlerArray )
       .map(function( evtHandler ) {
@@ -290,16 +295,20 @@
       $once: function() {
 
         var that = this;
+        var handlers = [];
 
         that.__when( arguments , function( evtHandler ) {
+
+          handlers.push( evtHandler );
+          
           evtHandler.before = function( event , func ) {
-            that.$enq(function() {
-              that.__remove( event.type , func );
-            });
-            that.$digest();
+            that.$dispel( evtHandler.events , func , true );
           };
+
           evtHandler.after = function() {
-            evtHandler.active = false;
+            static$shared$$$_forEach( handlers , function( handler ) {
+              handler.active = false;
+            });
           };
         });
 
@@ -315,15 +324,15 @@
         return that;
       },
 
-      $emit: function( eventType , args , originalEvent ) {
+      $emit: function( eventList , args , originalEvent ) {
 
         var that = this;
 
         that.$enq(function() {
 
-          eventType = eventType || that.__events;
+          eventList = eventList || that.__events;
 
-          static$shared$$$_forEach( eventType , function( type ) {
+          static$shared$$$_forEach( eventList , function( type ) {
 
             var handlers = that.__get( type );
             var event = originalEvent ? event$$cloneEvent( originalEvent , that ) : new event$$Event( that , type );
@@ -343,16 +352,16 @@
         return that;
       },
 
-      $dispel: function( eventType , MOJOHandler , force ) {
+      $dispel: function( eventList , MOJOHandler , force ) {
 
         var that = this;
         var func = static$shared$$$_getHandlerFunc( MOJOHandler );
 
         that.$enq(function() {
 
-          eventType = eventType || that.__events;
+          eventList = eventList || that.__events;
 
-          static$shared$$$_forEach( eventType , function( type ) {
+          static$shared$$$_forEach( eventList , function( type ) {
             if (force || !event$$isPrivate( type )) {
               that.__remove( type , func , !!force );
             }
@@ -364,24 +373,24 @@
         return that;
       },
 
-      /*args = [ eventType , [bindArgs] , [MOJOHandler] ]*/
+      /*args = [ eventList , [bindArgs] , [MOJOHandler] ]*/
       __when: function( args , callback ) {
 
         callback = static$shared$$$_ensureFunc( callback );
 
         var that = this;
-        var eventType = static$shared$$$_shift( args );
-        var MOJOHandler = static$shared$$$_is( static$shared$$$_last( args ) , 'function' ) || static$shared$$$_is( static$shared$$$_last( args ) , main$$default ) ? static$shared$$$_pop( args ) : that;
+        var eventList = static$shared$$$_shift( args );
+        var MOJOHandler = static$shared$$$_is( static$shared$$$_last( args ) , 'function' ) || static$isMOJO$$default( static$shared$$$_last( args )) ? static$shared$$$_pop( args ) : that;
         var bindArgs = args[0];
         
         var func = static$shared$$$_getHandlerFunc( MOJOHandler );
         var context = static$shared$$$_getHandlerContext( MOJOHandler , func );
 
         that.$enq(function() {
-          static$shared$$$_forEach( eventType , function( type , i ) {
-            callback(
-              that.__add( type , func , context , bindArgs )
-            );
+          static$shared$$$_forEach( eventList , function( type , i ) {
+            var evtHandler = that.__add( type , func , context , bindArgs );
+            evtHandler.events = static$shared$$$_ensureArray( eventList );
+            callback( evtHandler );
           });
         });
       },
@@ -550,7 +559,7 @@
       proto.$unset = function( path ) {
         var that = this;
         var target = that.$get( path );
-        if (static$shared$$$_is( target , main$$default )) {
+        if (static$isMOJO$$default( target )) {
           target.$deref();
         }
         that.__modBranch( static$shared$$$_EVT.$unset , path );
@@ -574,7 +583,7 @@
         
         var that = this;
 
-        if (!static$shared$$$_is( child , main$$default )) {
+        if (!static$isMOJO$$default( child )) {
           throw new static$shared$$$Error( 'child must be a $MOJO' );
         }
 
@@ -598,6 +607,13 @@
 
         return that;
       };
+
+      /*proto.$ignore = function( child ) {
+        
+        var that = this;
+
+        return that;
+      };*/
 
       proto.$deref = function() {
         var that = this;
@@ -694,6 +710,7 @@
     };
 
     main$$default[static$shared$$$_PROTO] = static$shared$$$_defineProto( proto$$default );
+    main$$default.isMOJO = static$isMOJO$$default;
     main$$default.create = static$create$$default;
     main$$default.construct = static$construct$$default;
     main$$default.aggregate = static$aggregate$$default;

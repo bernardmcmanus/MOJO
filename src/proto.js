@@ -1,6 +1,7 @@
 import $MOJO from 'main';
 import { isPrivate , getPublic } from 'event';
 import when from 'when';
+import isMOJO from 'static/isMOJO';
 import construct from 'static/construct';
 import {
   $Error,
@@ -72,7 +73,7 @@ function Proto() {
   proto.$unset = function( path ) {
     var that = this;
     var target = that.$get( path );
-    if ($_is( target , $MOJO )) {
+    if (isMOJO( target )) {
       target.$deref();
     }
     that.__modBranch( $_EVT.$unset , path );
@@ -96,7 +97,7 @@ function Proto() {
     
     var that = this;
 
-    if (!$_is( child , $MOJO )) {
+    if (!isMOJO( child )) {
       throw new $Error( 'child must be a $MOJO' );
     }
 
@@ -120,6 +121,13 @@ function Proto() {
 
     return that;
   };
+
+  /*proto.$ignore = function( child ) {
+    
+    var that = this;
+
+    return that;
+  };*/
 
   proto.$deref = function() {
     var that = this;

@@ -1,4 +1,3 @@
-import $MOJO from 'main';
 import EventHandler from 'eventHandler';
 import {
   Event,
@@ -6,6 +5,7 @@ import {
   isLocked,
   cloneEvent
 } from 'event';
+import isMOJO from 'static/isMOJO';
 import {
   $_length,
   $_shift,
@@ -35,16 +35,20 @@ export default {
   $once: function() {
 
     var that = this;
+    var handlers = [];
 
     that.__when( arguments , function( evtHandler ) {
+
+      handlers.push( evtHandler );
+      
       evtHandler.before = function( event , func ) {
-        that.$enq(function() {
-          that.__remove( event.type , func );
-        });
-        that.$digest();
+        that.$dispel( evtHandler.events , func , true );
       };
+
       evtHandler.after = function() {
-        evtHandler.active = false;
+        $_forEach( handlers , function( handler ) {
+          handler.active = false;
+        });
       };
     });
 
@@ -60,15 +64,15 @@ export default {
     return that;
   },
 
-  $emit: function( eventType , args , originalEvent ) {
+  $emit: function( eventList , args , originalEvent ) {
 
     var that = this;
 
     that.$enq(function() {
 
-      eventType = eventType || that.__events;
+      eventList = eventList || that.__events;
 
-      $_forEach( eventType , function( type ) {
+      $_forEach( eventList , function( type ) {
 
         var handlers = that.__get( type );
         var event = originalEvent ? cloneEvent( originalEvent , that ) : new Event( that , type );
@@ -88,16 +92,16 @@ export default {
     return that;
   },
 
-  $dispel: function( eventType , MOJOHandler , force ) {
+  $dispel: function( eventList , MOJOHandler , force ) {
 
     var that = this;
     var func = $_getHandlerFunc( MOJOHandler );
 
     that.$enq(function() {
 
-      eventType = eventType || that.__events;
+      eventList = eventList || that.__events;
 
-      $_forEach( eventType , function( type ) {
+      $_forEach( eventList , function( type ) {
         if (force || !isPrivate( type )) {
           that.__remove( type , func , !!force );
         }
@@ -109,24 +113,24 @@ export default {
     return that;
   },
 
-  /*args = [ eventType , [bindArgs] , [MOJOHandler] ]*/
+  /*args = [ eventList , [bindArgs] , [MOJOHandler] ]*/
   __when: function( args , callback ) {
 
     callback = $_ensureFunc( callback );
 
     var that = this;
-    var eventType = $_shift( args );
-    var MOJOHandler = $_is( $_last( args ) , 'function' ) || $_is( $_last( args ) , $MOJO ) ? $_pop( args ) : that;
+    var eventList = $_shift( args );
+    var MOJOHandler = $_is( $_last( args ) , 'function' ) || isMOJO( $_last( args )) ? $_pop( args ) : that;
     var bindArgs = args[0];
     
     var func = $_getHandlerFunc( MOJOHandler );
     var context = $_getHandlerContext( MOJOHandler , func );
 
     that.$enq(function() {
-      $_forEach( eventType , function( type , i ) {
-        callback(
-          that.__add( type , func , context , bindArgs )
-        );
+      $_forEach( eventList , function( type , i ) {
+        var evtHandler = that.__add( type , func , context , bindArgs );
+        evtHandler.events = $_ensureArray( eventList );
+        callback( evtHandler );
       });
     });
   },

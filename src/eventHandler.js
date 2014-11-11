@@ -10,6 +10,7 @@ export default function( func , context , bindArgs ) {
   that.func = func;
   that.locked = false;
   that.active = true;
+  that.events = [];
   that.before = function() {};
   that.after = function() {};
 

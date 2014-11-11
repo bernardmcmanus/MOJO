@@ -261,12 +261,27 @@
   });
 
   describe( '$once' , function() {
+    
     it( 'should remove an event handler after it is executed' , function( done ) {
-      mojo.$once( 'gnarly' , function(){
+      mojo.$once( 'gnarly' , function() {
         expect( mojo.handlers ).to.have.property( 'gnarly' );
       });
       mojo.$emit( 'gnarly' );
       expect( mojo.handlers ).to.not.have.property( 'gnarly' );
+      done();
+    });
+
+    it( 'should only be executed for one event type in eventList' , function( done ) {
+      var eventList = [ 'gnarly' , 'rad' ];
+      mojo.$once( eventList , function( e ) {
+        eventList.forEach(function( type ) {
+          expect( mojo.handlers ).to.have.property( type );
+        });
+      });
+      mojo.$emit( eventList );
+      eventList.forEach(function( type ) {
+        expect( mojo.handlers ).to.not.have.property( type );
+      });
       done();
     });
   });
