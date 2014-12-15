@@ -6,43 +6,352 @@
   var fs = require( 'fs-extra' );
   var util = require( 'util' );
   var chai = require( 'chai' );
-  var assert = chai.assert;
   var expect = chai.expect;
 
 
-  var $MOJO = require( './mojo.js' );
+  var E$ = require( './emoney.js' );
   var TestModules = require( './testModules.transpiled.js' );
-  var MLChecker = require( './memleakChecker' );
+  //var MLChecker = require( './memleakChecker' );
 
 
-  $MOJO.log = function() {
+  E$.log = function() {
     var args = Array.prototype.map.call( arguments , function( arg ) {
-      return util.inspect( arg , { depth: null , colors: true });
+      return util.inspect( arg , { depth: null, showHidden: true, colors: true });
     });
     console.log.apply( null , args );
   };
 
 
-  var SEED = { name: 'mojo' };
+  var SEED = { name: 'emoney' };
   function Test(){}
   function Test2(){}
   function Test3(){}
 
   function GNARLY() {
-    $MOJO.construct( this );
+    E$.construct( this );
   }
 
-  GNARLY.prototype = $MOJO.create({
+  GNARLY.prototype = E$.create({
     tubes: function() {},
-    handleMOJO: function() {}
+    handleE$: function() {}
   });
 
-  var mojo = new $MOJO( SEED );
+  var emoney = E$( SEED );
 
 
   describe( 'constructor' , function() {
-    it( 'should create a new $MOJO instance' , function( done ) {
-      assert.instanceOf( mojo , $MOJO );
+
+    it( 'should create a new E$ instance' , function( done ) {
+      expect( emoney ).to.be.an.instanceOf( E$ );
+      done();
+    });
+  });
+
+  describe( 'prototype' , function() {
+
+    it( 'should have no enumerable properties when E$ is created with constructor' , function( done ) {
+      var keys = [];
+      for (var key in emoney) {
+        keys.push( key );
+      }
+      expect( keys.length ).to.equal(
+        Object.keys( SEED ).length
+      );
+      done();
+    });
+    
+    it( 'should inherit no enumerable properties when E$ is created with E$.create / E$.construct' , function( done ) {
+      var emoneyIsh = new GNARLY();
+      var keys = [];
+      for (var key in emoneyIsh) {
+        keys.push( key );
+      }
+      expect( keys.length ).to.equal(
+        Object.keys( GNARLY.prototype ).length
+      );
+      done();
+    });
+  });
+
+  describe( '#__add' , function() {
+
+    it( 'should push to the handlers[type] array' , function( done ) {
+      emoney.__add( 'gnarly' , Test , null );
+      expect( emoney.handlers.gnarly.length ).to.equal( 1 );
+      emoney.handlers.gnarly = [];
+      done();
+    });
+
+    it( 'should emit the $when event' , function( done ) {
+      emoney.$once( TestModules.$_EVT.$when , function( e ) {
+        expect( e.type ).to.equal( TestModules.$_EVT.$when );
+        expect( emoney.handlers.gnarly.length ).to.equal( 1 );
+        emoney.handlers.gnarly = [];
+        done();
+      });
+      emoney.__add( 'gnarly' , Test , null );
+    });
+  });
+
+  describe( '#__get' , function() {
+
+    it( 'should return all handlers if type is falsy' , function( done ) {
+      var handlers = emoney.__get();
+      expect( handlers ).to.be.an.instanceOf( Object );
+      done();
+    });
+    
+    it( 'should return handlers[type] if type is defined' , function( done ) {
+      var handlerArray = emoney.__get( 'gnarly' );
+      expect( handlerArray ).to.be.an.instanceOf( Array );
+      done();
+    });
+    
+    it( 'should return an empty array if type does not exist' , function( done ) {
+      var handlerArray = emoney.__get( 'rad' );
+      expect( handlerArray ).to.be.an.instanceOf( Array );
+      expect( handlerArray.length ).to.equal( 0 );
+      expect( emoney.handlers ).to.not.have.property( 'rad' );
+      done();
+    });
+  });
+
+  describe( '#__invoke' , function() {
+
+    it( 'should invoke event handlers in the handlers[type] array' , function( done ) {
+      emoney.$once( 'rad' , function( e , test1 , test2 ) {
+        expect( test1 ).to.equal( true );
+        expect( test2 ).to.equal( false );
+        done();
+      });
+      emoney.__invoke( 'rad' , [ true , false ]);
+    });
+
+    it( 'should emit the $emit event' , function( done ) {
+      emoney.$once( TestModules.$_EVT.$emit , function( e ) {
+        expect( e.type ).to.equal( TestModules.$_EVT.$emit );
+        done();
+      });
+      emoney.__invoke( 'rad' );
+    });
+  });
+
+  describe( '#__remove' , function() {
+
+    it( 'should delete the handlers[type] array if length is 0' , function( done ) {
+      emoney.__remove( 'gnarly' , Test );
+      expect( emoney.handlers ).to.not.have.property( 'gnarly' );
+      done();
+    });
+    
+    it( 'should delete the handlers[type] array if func is falsy' , function( done ) {
+      emoney.__add( 'gnarly' , Test , null );
+      expect( emoney.handlers.gnarly.length ).to.equal( 1 );
+      emoney.__remove( 'gnarly' );
+      expect( emoney.handlers ).to.not.have.property( 'gnarly' );
+      done();
+    });
+    
+    it( 'should remove all matched handlers' , function( done ) {
+      emoney.__add( 'gnarly' , Test , null );
+      emoney.__add( 'gnarly' , Test , null );
+      expect( emoney.handlers.gnarly.length ).to.equal( 2 );
+      emoney.__remove( 'gnarly' , Test );
+      expect( emoney.handlers ).to.not.have.property( 'gnarly' );
+      done();
+    });
+    
+    it( 'should remove only handlers matched by event type and handler function' , function( done ) {
+      emoney.__add( 'gnarly' , Test , null );
+      emoney.__add( 'gnarly' , Test2 , null );
+      emoney.__add( 'rad' , Test , null );
+      emoney.__add( 'rad' , Test2 , null );
+      expect( emoney.handlers.gnarly.length ).to.equal( 2 );
+      expect( emoney.handlers.rad.length ).to.equal( 2 );
+      emoney.__remove( 'gnarly' , Test );
+      emoney.__remove( 'rad' , Test );
+      expect( emoney.handlers.gnarly.length ).to.equal( 1 );
+      expect( emoney.handlers.rad.length ).to.equal( 1 );
+      emoney.$dispel();
+      done();
+    });
+
+    it( 'should emit the $dispel event' , function( done ) {
+      emoney.$once( TestModules.$_EVT.$dispel , function( e , args ) {
+        expect( e.type ).to.equal( TestModules.$_EVT.$dispel );
+        done();
+      });
+      emoney.__remove( 'gnarly' );
+    });
+  });
+
+  describe( '$set' , function() {
+
+    it( 'should emit the ' + TestModules.$_EVT.$set + ' event' , function( done ) {
+      emoney.$once( '$$set' , function( e , key ) {
+        expect( key ).to.equal( 'gnarly' );
+        expect( emoney[key] ).to.equal( true );
+        done();
+      });
+      emoney.$set( 'gnarly' , true );
+    });
+  });
+
+  describe( '$unset' , function() {
+
+    it( 'should emit the ' + TestModules.$_EVT.$unset + ' event' , function( done ) {
+      emoney.$once( '$$unset' , function( e , key ) {
+        expect( emoney.handlers ).to.not.have.property( 'gnarly' );
+        expect( key ).to.equal( 'gnarly' );
+        done();
+      });
+      emoney.$unset( 'gnarly' );
+    });
+  });
+
+  describe( '$when' , function() {
+    
+    it( 'should add an event handler' , function( done ) {
+      emoney.$when( 'gnarly' , Test );
+      expect( emoney.handlers ).to.have.property( 'gnarly' );
+      expect( emoney.handlers.gnarly.length ).to.equal( 1 );
+      emoney.$dispel();
+      done();
+    });
+
+    it( 'should use subject.handleE$ when handler is falsy' , function( done ) {
+      emoney.$when( 'rad' );
+      expect( emoney.handlers.rad[0].func ).to.equal( emoney.handleE$ );
+      emoney.$dispel( 'rad' );
+      done();
+    });
+
+    it( 'should bind args to each event handler' , function( done ) {
+      var arr = [];
+      for (var i = 0; i < 10; i++) { arr.push( i ) }
+      arr.forEach(function( i ) {
+        emoney.$when( 'rad' , [ i , 'test-' + i ] , function( e , n , test ) {
+          expect( n ).to.equal( i );
+          expect( test ).to.equal( 'test-' + i );
+        });
+      });
+      emoney.$emit( 'rad' ).$dispel( 'rad' );
+      done();
+    });
+  });
+
+  describe( '$dispel' , function() {
+
+    it( 'should remove an event handler' , function( done ) {
+      emoney.$when( 'gnarly' , Test );
+      emoney.$dispel( 'gnarly' , Test );
+      expect( emoney.handlers ).to.not.have.property( 'gnarly' );
+      done();
+    });
+
+    it( 'should remove all event handlers if no arguments are passed' , function( done ) {
+      emoney.$when( 'gnarly' , Test );
+      emoney.$when( 'rad' , Test );
+      expect( emoney.handlers.gnarly.length ).to.equal( 1 );
+      expect( emoney.handlers.rad.length ).to.equal( 1 );
+      emoney.$dispel();
+      expect( emoney.handlers ).to.not.have.property( 'gnarly' );
+      expect( emoney.handlers ).to.not.have.property( 'rad' );
+      done();
+    });
+
+    it( 'should remove all handlers matched by func when event type is falsy' , function( done ) {
+      emoney
+        .$when([ 'gnarly' , 'rad' ] , Test )
+        .$when([ 'gnarly' , 'rad' ] , Test2 );
+      expect( emoney.handlers.gnarly.length ).to.equal( 2 );
+      expect( emoney.handlers.rad.length ).to.equal( 2 );
+      emoney.$dispel( null , Test );
+      expect( emoney.handlers.gnarly.length ).to.equal( 1 );
+      expect( emoney.handlers.rad.length ).to.equal( 1 );
+      emoney.$dispel();
+      expect( emoney.handlers ).to.not.have.property( 'gnarly' );
+      expect( emoney.handlers ).to.not.have.property( 'rad' );
+      done();
+    });
+
+    it( 'should not remove private handlers if force is falsy' , function( done ) {
+      TestModules.$_EVT_ARRAY.forEach(function( type ) {
+        emoney.$when( type );
+      });
+      emoney.$dispel();
+      TestModules.$_EVT_ARRAY.forEach(function( type ) {
+        expect( emoney.handlers ).to.have.property( type );
+        expect( emoney.handlers[type].length ).to.equal( 1 );
+      });
+      done();
+    });
+
+    it( 'should remove private handlers if force is truthy' , function( done ) {
+      emoney.$dispel( null , null , true );
+      TestModules.$_EVT_ARRAY.forEach(function( type ) {
+        expect( emoney.handlers ).to.not.have.property( type );
+      });
+      done();
+    });
+  });
+
+  describe( '$once' , function() {
+
+    it( 'should remove an event handler after it is executed' , function( done ) {
+      emoney.$once( 'gnarly' , function() {
+        expect( emoney.handlers ).to.have.property( 'gnarly' );
+      });
+      emoney.$emit( 'gnarly' );
+      expect( emoney.handlers ).to.not.have.property( 'gnarly' );
+      done();
+    });
+
+    it( 'should only be executed for one event type in eventList' , function( done ) {
+      var eventList = [ 'gnarly' , 'rad' ];
+      var result = [];
+      emoney.$once( eventList , function( e ) {
+        result.push( e.type );
+        eventList.forEach(function( type ) {
+          expect( emoney.handlers ).to.have.property( type );
+        });
+      });
+      emoney.$emit( eventList );
+      emoney.$emit( eventList );
+      eventList.forEach(function( type ) {
+        expect( emoney.handlers ).to.not.have.property( type );
+      });
+      expect( result ).to.eql( eventList );
+      done();
+    });
+  });
+
+
+
+  describe( 'EventHandler' , function() {
+
+    it( 'args should be unique to each event occurrence' , function( done ) {
+      function handlerFunc( e ) {
+        expect( arguments.length ).to.equal( 1 );
+      }
+      var evt = new TestModules.Event.constructor( emoney , 'rad' );
+      var evtHandler = new TestModules.EventHandler( handlerFunc , emoney );
+      for (var i = 0; i < 10; i++) {
+        evtHandler.invoke( evt );
+      }
+      done();
+    });
+  });
+
+
+
+
+  return;
+
+
+  /*describe( 'constructor' , function() {
+    it( 'should create a new E$ instance' , function( done ) {
+      assert.instanceOf( mojo , E$ );
       done();
     });
   });
@@ -58,7 +367,7 @@
       );
       done();
     });
-    it( 'should inherit no enumerable properties when mojo is created with $MOJO.create / $MOJO.construct' , function( done ) {
+    it( 'should inherit no enumerable properties when mojo is created with E$.create / E$.construct' , function( done ) {
       var mojoIsh = new GNARLY();
       var keys = [];
       for (var key in mojoIsh) {
@@ -134,9 +443,9 @@
       mojo.$dispel();
       done();
     });
-  });
+  });*/
 
-  describe( '#maxWatchers' , function() {
+  /*describe( '#maxWatchers' , function() {
     var initial = mojo.__maxWatchers;
     it( 'should set __maxWatchers if value is a number >= 0' , function( done ) {
       mojo.maxWatchers( 0 );
@@ -160,9 +469,9 @@
       expect( max ).to.equal( initial );
       done();
     });
-  });
+  });*/
 
-  describe( '$set' , function() {
+  /*describe( '$set' , function() {
     it( 'should emit the ' + TestModules.$_EVT.$set + ' event' , function( done ) {
       mojo.$once( '$$set' , function( e , path ) {
         expect( path ).to.equal( 'foo.bar.gnarly' );
@@ -203,24 +512,24 @@
       });
       mojo.$unset( 'foo' );
     });
-  });
+  });*/
 
-  describe( '$when' , function() {
+  /*describe( '$when' , function() {
     it( 'should add an event handler' , function( done ) {
       mojo.$when( 'gnarly' , Test );
       expect( mojo.handlers ).to.have.property( 'gnarly' );
       expect( mojo.handlers.gnarly.length ).to.equal( 1 );
       done();
     });
-    it( 'should use subject.handleMOJO when handler is falsy' , function( done ) {
+    it( 'should use subject.handleE$ when handler is falsy' , function( done ) {
       mojo.$when( 'rad' );
-      expect( mojo.handlers.rad[0].func ).to.equal( mojo.handleMOJO );
+      expect( mojo.handlers.rad[0].func ).to.equal( mojo.handleE$ );
       mojo.$dispel( 'rad' );
       done();
     });
-  });
+  });*/
 
-  describe( '$dispel' , function() {
+  /*describe( '$dispel' , function() {
     it( 'should remove an event handler' , function( done ) {
       mojo.$dispel( 'gnarly' , Test );
       expect( mojo.handlers ).to.not.have.property( 'gnarly' );
@@ -258,10 +567,10 @@
       mojo.$dispel();
       done();
     });
-  });
+  });*/
 
-  describe( '$once' , function() {
-    
+  /*describe( '$once' , function() {
+
     it( 'should remove an event handler after it is executed' , function( done ) {
       mojo.$once( 'gnarly' , function() {
         expect( mojo.handlers ).to.have.property( 'gnarly' );
@@ -284,20 +593,20 @@
       });
       done();
     });
-  });
+  });*/
 
-  describe( '$watch' , function() {
+  /*describe( '$watch' , function() {
 
-    var child1 = new $MOJO({ name: 'child-1' });
-    var child2 = new $MOJO({ name: 'child-2' });
-    var child3 = new $MOJO({ name: 'child-3' });
+    var child1 = new E$({ name: 'child-1' });
+    var child2 = new E$({ name: 'child-2' });
+    var child3 = new E$({ name: 'child-3' });
 
-    it( 'should throw an error if child is not an instance of $MOJO' , function( done ) {
+    it( 'should throw an error if child is not an instance of E$' , function( done ) {
       expect(function() {
         mojo.$watch( {} );
       })
       .to
-      .throw( Error , ( /child must be a \$mojo/i ));
+      .throw( Error , ( /child must be a \E$/i ));
       done();
     });
 
@@ -363,9 +672,9 @@
       });
     });
 
-    it( 'should integrate seamlessly with $MOJO.aggregate' , function( done ) {
+    it( 'should integrate seamlessly with E$.aggregate' , function( done ) {
 
-      var agg = $MOJO.aggregate([
+      var agg = E$.aggregate([
         mojo,
         child1,
         child2
@@ -481,7 +790,7 @@
       instigator.$deref();
     });
 
-    it( 'should $deref children when $unset is called on a $MOJO instance' , function( done ) {
+    it( 'should $deref children when $unset is called on a E$ instance' , function( done ) {
       mojo.$unset( 'level1' );
       expect( level1.watchers.length ).to.equal( 0 );
       expect( mojo.watchers.length ).to.equal( 0 );
@@ -503,7 +812,7 @@
 
     it( 'should not cause a memory leak when __maxWatchers is default' , function( done ) {
       checker.good(function() {
-        var randoMojo = new $MOJO();
+        var randoMojo = new E$();
         randoMojo.$watch( mojo );
       })
       .then(function( success ) {
@@ -517,7 +826,7 @@
     it( 'should cause a memory leak when __maxWatchers is unlimited' , function( done ) {
       mojo.maxWatchers( 0 );
       checker.bad(function() {
-        var randoMojo = new $MOJO();
+        var randoMojo = new E$();
         randoMojo.$watch( mojo );
       })
       .then(function( success ) {
@@ -537,31 +846,31 @@
       })
       .catch( done );
     });
-  });
+  });*/
 
-  describe( '$MOJO.create' , function() {
-    it( 'should create a new object that extends the $MOJO prototype' , function( done ) {
-      for (var key in $MOJO.prototype) {
-        if (key === 'handleMOJO') {
-          expect( GNARLY.prototype[key] ).to.not.equal( $MOJO.prototype[key] );
+  describe( 'E$.create' , function() {
+    it( 'should create a new object that extends the E$ prototype' , function( done ) {
+      for (var key in E$.prototype) {
+        if (key === 'handleE$') {
+          expect( GNARLY.prototype[key] ).to.not.equal( E$.prototype[key] );
         }
         else {
-          expect( GNARLY.prototype[key] ).to.equal( $MOJO.prototype[key] );
+          expect( GNARLY.prototype[key] ).to.equal( E$.prototype[key] );
         }
       }
       expect( GNARLY.prototype ).to.include.keys( 'tubes' );
-      expect( GNARLY.prototype ).to.include.keys( 'handleMOJO' );
+      expect( GNARLY.prototype ).to.include.keys( 'handleE$' );
       done();
     });
   });
 
-  describe( '$MOJO.construct' , function() {
-    it( 'should define required properties for an instance created with $MOJO' , function( done ) {
+  describe( 'E$.construct' , function() {
+    it( 'should define required properties for an instance created with E$' , function( done ) {
       var gnarly = new GNARLY();
       expect( gnarly.tubes ).to.be.a( 'function' );
-      expect( gnarly.handleMOJO ).to.be.a( 'function' );
+      expect( gnarly.handleE$ ).to.be.a( 'function' );
       expect( gnarly.handlers ).to.be.an( 'object' );
-      expect( gnarly.handleMOJO ).to.not.equal( GNARLY.prototype.handleMOJO );
+      expect( gnarly.handleE$ ).to.not.equal( GNARLY.prototype.handleE$ );
       done();
     });
     it( 'should define unique handlers objects' , function( done ) {
@@ -576,13 +885,13 @@
     });
   });
 
-  describe( '$MOJO.aggregate' , function() {
+  describe( 'E$.aggregate' , function() {
 
     var mojos = [ 0 , 1 , 2 , 3 ].map(function( i ) {
-      return new $MOJO({ name: 'mojo-' + i });
+      return new E$({ name: 'mojo-' + i });
     });
 
-    var aggregator = $MOJO.aggregate( mojos );
+    var aggregator = E$.aggregate( mojos );
 
     it( 'should aggregate mojos[i].$when' , function( done ) {
       var n = -1;
@@ -639,7 +948,7 @@
 
   describe( 'Event' , function() {
     
-    var Event = TestModules.Event;
+    /*var Event = TestModules.Event;
     
     describe( '#isPrivate' , function() {
       it( 'should determine whether an event string is designated as private' , function( done ) {
@@ -684,10 +993,10 @@
         });
         done();
       });
-    });
+    });*/
   });
 
-  describe( 'EventHandler' , function() {
+  /*describe( 'EventHandler' , function() {
     it( 'args should be unique to each event occurrence' , function( done ) {
 
       function handlerFunc( e ) {
@@ -702,7 +1011,7 @@
       }
       done();
     });
-  });
+  });*/
 
   describe( 'Private Events' , function() {
 

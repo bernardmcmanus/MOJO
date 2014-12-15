@@ -1,11 +1,11 @@
+/* jshint -W093 */
+
 export var $Array = Array;
 export var $Object = Object;
 export var $Date = Date;
 export var $Error = Error;
 
 export var $_PROTO = 'prototype';
-export var $_HANDLE_MOJO = 'handleMOJO';
-export var __$_HANDLE_MOJO = '__' + $_HANDLE_MOJO;
 export var $_UNDEFINED;
 
 export var $_EVT = {
@@ -13,9 +13,13 @@ export var $_EVT = {
   $unset: '$$unset',
   $when: '$$when',
   $emit: '$$emit',
-  $dispel: '$$dispel',
-  $deref: '$$deref'
+  $dispel: '$$dispel'
+  //$deref: '$$deref'
 };
+
+export var $_EVT_ARRAY = $_keys( $_EVT ).map(function( key ) {
+  return $_EVT[key];
+});
 
 export function $_length( subject ) {
   return subject.length;
@@ -62,7 +66,7 @@ export function $_pop( subject ) {
 }
 
 export function $_slice( subject , start , end ) {
-  return $Array[$_PROTO].slice.call( subject , start , end );
+  return $Array[$_PROTO].slice.call( subject , start || 0 , end );
 }
 
 export function $_last( subject ) {
@@ -70,49 +74,11 @@ export function $_last( subject ) {
 }
 
 export function $_is( subject , test ) {
-  return (typeof test === 'string') ? (typeof subject === test) : (subject instanceof test);
+  return (typeof test == 'string') ? (typeof subject == test) : (subject instanceof test);
 }
 
 export function $_has( subject , key ) {
   return subject.hasOwnProperty( key );
-}
-
-export function $_parseRoute( path ) {
-  return path.split( '.' );
-}
-
-export function $_ensureBranch( subject , path , action ) {
-  
-  var route = $_parseRoute( path );
-  var lastKey = $_pop( route );
-  
-  $_forEach( route , function( key ) {
-    subject[key] = subject = subject[key] || {};
-  });
-  
-  return function( value ) {
-    
-    /*
-      the following is an abbreviated way of writing:
-      -----------------------------------------------
-      switch (action) {
-        case $_EVT.$set:
-          return subject[lastKey] = value;
-        case $_EVT.$unset:
-          return $_delete( subject , lastKey );
-        default:
-          return (subject || {})[lastKey];
-      }
-    */
-
-    return action === $_EVT.$set ? 
-      subject[lastKey] = value :
-      (
-        action === $_EVT.$unset ?
-          $_delete( subject , lastKey ) :
-          (subject || {})[lastKey]
-      );
-  };
 }
 
 export function $_ensureFunc( subject ) {
@@ -130,7 +96,7 @@ export function $_defineProto( proto ) {
 }
 
 export function $_getHandlerFunc( subject ) {
-  return (subject || {})[ $_HANDLE_MOJO ] ? subject[ $_HANDLE_MOJO ] : subject;
+  return (subject || {}).handleE$ ? subject.handleE$ : subject;
 }
 
 export function $_getHandlerContext( handler , func ) {

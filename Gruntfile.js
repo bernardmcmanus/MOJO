@@ -2,13 +2,17 @@ module.exports = function( grunt ) {
 
 
   var fs = require( 'fs-extra' );
-  var exec = require( 'child_process' ).exec;
+  var cp = require( 'child_process' );
   var util = require( 'util' );
+  var colors = require( 'colors' );
   var AMDFormatter = require( 'es6-module-transpiler-amd-formatter' );
   var transpiler = require( 'es6-module-transpiler' );
   var Container = transpiler.Container;
   var FileResolver = transpiler.FileResolver;
   var BundleFormatter = transpiler.formatters.bundle;
+
+
+  var SRC = 'src/**/*.js';
 
 
   grunt.initConfig({
@@ -23,20 +27,24 @@ module.exports = function( grunt ) {
     },
 
     jshint: {
-      all: [ 'Gruntfile.js' , 'src/**/*.js' ],
+      all: [ 'Gruntfile.js' , SRC ],
       options: {
         esnext: true
       }
     },
 
+    'import-clean': {
+      all: SRC
+    },
+
     clean: {
       'dist': [ 'dist' ],
       'tmp': [ 'tmp' ],
-      'test': [ 'test/mojo.js' , 'test/testModules.transpiled.js' , 'test/heap' ],
-      'common-dev': [ 'dist/mojo-<%= pkg.version %>.js' ],
-      'common-prod': [ 'dist/mojo-<%= pkg.version %>.min.js' ],
-      'amd-dev': [ 'dist/mojo-<%= pkg.version %>.amd.js' ],
-      'amd-prod': [ 'dist/mojo-<%= pkg.version %>.amd.min.js' ]
+      'test': [ 'test/emoney.js' , 'test/testModules.transpiled.js' , 'test/heap' ],
+      'common-dev': [ 'dist/<%= pkg.name %>-<%= pkg.version %>.js' ],
+      'common-prod': [ 'dist/<%= pkg.name %>-<%= pkg.version %>.min.js' ],
+      'amd-dev': [ 'dist/<%= pkg.name %>-<%= pkg.version %>.amd.js' ],
+      'amd-prod': [ 'dist/<%= pkg.name %>-<%= pkg.version %>.amd.min.js' ]
     },
 
     replace: [{
@@ -48,7 +56,7 @@ module.exports = function( grunt ) {
           },
           {
             match: /(\"main\")(.*?)(\")(.{1,}?)(\")/i,
-            replacement: '\"main\": \"dist/mojo-<%= pkg.version %>.min.js\"'
+            replacement: '\"main\": \"dist/<%= pkg.name %>-<%= pkg.version %>.min.js\"'
           }
         ]
       },
@@ -66,7 +74,7 @@ module.exports = function( grunt ) {
 
     watch: {
       debug: {
-        files: [ 'Gruntfile.js' , 'src/**/*.js' , 'build/*.js' , 'test/*.js' ],
+        files: [ 'Gruntfile.js' , SRC , 'build/*.js' , 'test/*.js' ],
         tasks: [ 'test' ]
       }
     },
@@ -90,11 +98,11 @@ module.exports = function( grunt ) {
       },
       amd: {
         src: 'tmp/**/*.amd.js',
-        dest: 'dist/mojo-<%= pkg.version %>.amd.js'
+        dest: 'dist/<%= pkg.name %>-<%= pkg.version %>.amd.js'
       },
       common: {
-        src: 'tmp/mojo.common.js',
-        dest: 'dist/mojo-<%= pkg.version %>.js'
+        src: 'tmp/emoney.common.js',
+        dest: 'dist/<%= pkg.name %>-<%= pkg.version %>.js'
       }
     },
 
@@ -104,12 +112,12 @@ module.exports = function( grunt ) {
       },
       amd: {
         files: {
-          'dist/mojo-<%= pkg.version %>.amd.min.js': 'tmp/**/*.amd.js'
+          'dist/<%= pkg.name %>-<%= pkg.version %>.amd.min.js': 'tmp/**/*.amd.js'
         }
       },
       common: {
         files: {
-          'dist/mojo-<%= pkg.version %>.min.js': 'tmp/**/*.js'
+          'dist/<%= pkg.name %>-<%= pkg.version %>.min.js': 'tmp/**/*.js'
         }
       }
     }
@@ -125,7 +133,8 @@ module.exports = function( grunt ) {
     'grunt-contrib-concat',
     'grunt-contrib-uglify',
     'grunt-contrib-watch',
-    'grunt-es6-module-transpiler'
+    'grunt-es6-module-transpiler',
+    'grunt-import-clean'
   ]
   .forEach( grunt.loadNpmTasks );
 
@@ -156,11 +165,11 @@ module.exports = function( grunt ) {
 
 
   grunt.registerTask( 'transpile:common' , function() {
-    transpile( '../build/mojo.umd' , 'tmp/mojo.common.js' );
+    transpile( '../build/emoney.umd' , 'tmp/emoney.common.js' );
   });
 
 
-  grunt.registerTask( 'getHash' , function() {
+  grunt.registerTask( 'git-hash' , function() {
 
     grunt.task.requires( 'git-describe' );
 
@@ -182,9 +191,9 @@ module.exports = function( grunt ) {
   });
 
 
-  grunt.registerTask( 'getBranch' , function() {
+  grunt.registerTask( 'git-branch' , function() {
     var done = this.async();
-    exec( 'git status' , function( err , stdout , stderr ) {
+    cp.exec( 'git status' , function( err , stdout , stderr ) {
       if (!err) {
         var branch = stdout
           .split( '\n' )
@@ -197,28 +206,42 @@ module.exports = function( grunt ) {
   });
 
 
+  grunt.registerTask( 'build:describe-prod' , function() {
+    var files = grunt.file.expand( SRC );
+    var pkg = grunt.config.get( 'pkg' );
+    var name = pkg.name + '-' + pkg.version + '.min.js';
+    var bytesInit = files.reduce(function( prev , current ) {
+      return prev + fs.statSync( current ).size;
+    }, 0);
+    var bytesFinal = fs.statSync( 'dist/' + name ).size;
+    var kbInit = (Math.round( bytesInit / 10 ) / 100);
+    var kbFinal = (Math.round( bytesFinal / 10 ) / 100).toString();
+    console.log('File ' + name.cyan + ' created: ' + (kbInit + ' kB').green + ' \u2192 ' + (kbFinal + ' kB').green);
+  });
+
+
   grunt.registerTask( 'copyTestBuild' , function() {
     var version = grunt.config.get( 'pkg.version' );
-    var src = 'dist/mojo-' + version + '.js';
-    var dest = 'test/mojo.js';
+    var name = grunt.config.get( 'pkg.name' );
+    var src = 'dist/' + name + '-' + version + '.js';
+    var dest = 'test/emoney.js';
     fs.copySync( src , dest );
   });
 
 
   grunt.registerTask( 'runTests' , function() {
     var done = this.async();
-    exec( 'npm test' , function( err , stdout , stderr ) {
+    cp.exec( 'npm test' , function( err , stdout , stderr ) {
       util.puts( err ? err: stdout );
       done();
     });
   });
 
 
-  grunt.registerTask( 'always' , [
-    'jshint',
+  grunt.registerTask( 'git' , [
     'git-describe',
-    'getHash',
-    'getBranch'
+    'git-hash',
+    'git-branch'
   ]);
 
 
@@ -227,12 +250,13 @@ module.exports = function( grunt ) {
     'build',
     'replace',
     'test',
-    'clean:test'
+    'clean:test',
+    'build:describe-prod'
   ]);
 
 
   grunt.registerTask( 'build' , [
-    'always',
+    'git',
     'clean:dist',
     //'build:amd',
     'build:common'
@@ -284,6 +308,8 @@ module.exports = function( grunt ) {
 
 
   grunt.registerTask( 'test' , [
+    'jshint',
+    'import-clean',
     'clean:test',
     'build:common-dev',
     'copyTestBuild',

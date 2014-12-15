@@ -1,12 +1,12 @@
 {
-  "name": "MOJO",
+  "name": "emoney",
   "version": "0.2.0",
-  "homepage": "https://github.com/elnarddogg/MOJO.git",
+  "homepage": "https://github.com/elnarddogg/emoney.git",
   "authors": [
     "Bernard McManus"
   ],
   "description": "The Modern JavaScript Object",
-  "main": "dist/mojo-0.2.0.min.js",
+  "main": "dist/emoney-0.2.0.min.js",
   "keywords": [
     "javascript",
     "object",

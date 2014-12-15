@@ -1,18 +1,18 @@
-import $MOJO from 'main';
+import E$ from 'main';
 import proto from 'proto';
-import aggregate from 'static/aggregate';
+//import aggregate from 'static/aggregate';
 import construct from 'static/construct';
 import create from 'static/create';
-import isMOJO from 'static/isMOJO';
+import isE$ from 'static/is-emoney';
 import {
   $_defineProto,
   $_PROTO
 } from 'static/shared';
 
-$MOJO[$_PROTO] = $_defineProto( proto );
-$MOJO.isMOJO = isMOJO;
-$MOJO.create = create;
-$MOJO.construct = construct;
-$MOJO.aggregate = aggregate;
+E$[$_PROTO] = $_defineProto( proto );
+E$.isE$ = isE$;
+E$.create = create;
+E$.construct = construct;
+//E$.aggregate = aggregate;
 
-export default $MOJO;
+export default E$;

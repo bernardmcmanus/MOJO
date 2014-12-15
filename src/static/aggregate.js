@@ -1,4 +1,4 @@
-import $MOJO from 'main';
+import E$ from 'main';
 import { isPrivate } from 'event';
 import {
   $Error,
@@ -10,7 +10,7 @@ import {
 
 export default function( arr ) {
 
-  var aggregator = new $MOJO();
+  var aggregator = E$();
 
   $_forEach( arr , function( aggregatee ) {
     $_forEach( $_keys( $_EVT ) , function( key ) {

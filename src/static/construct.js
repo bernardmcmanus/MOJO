@@ -1,40 +1,42 @@
 import {
   $_defineProperty,
   $_keys,
-  $_ensureFunc,
-  $_isArray,
-  $_forEach,
-  $_EVT,
-  $_HANDLE_MOJO,
-  __$_HANDLE_MOJO
+  $_ensureFunc
+  //$_forEach,
+  //$_EVT
 } from 'static/shared';
 
 
 export default function( subject ) {
 
-  var inprog = false, __maxWatchers = 10, watchers = [];
+  //var inprog = false, __maxWatchers = 10, watchers = [];
 
   $_defineProperty( subject , '__stack' , {
     value: []
   });
 
   $_defineProperty( subject , '__inprog' , {
+    value: false,
+    writable: true
+  });
+
+  /*$_defineProperty( subject , '__inprog' , {
     get: function() {
       return inprog;
     },
     set: function( value ) {
       inprog = value;
     }
-  });
+  });*/
 
-  $_defineProperty( subject , '__maxWatchers' , {
+  /*$_defineProperty( subject , '__maxWatchers' , {
     get: function() {
       return __maxWatchers;
     },
     set: function( value ) {
       __maxWatchers = value;
     }
-  });
+  });*/
 
   $_defineProperty( subject , '__events' , {
     get: function() {
@@ -46,28 +48,28 @@ export default function( subject ) {
     value: {}
   });
 
-  $_defineProperty( subject , 'watchers' , {
+  /*$_defineProperty( subject , 'watchers' , {
     get: function() {
       return watchers;
     },
     set: function( value ) {
       watchers = $_isArray( value ) ? value : [];
     }
+  });*/
+
+  $_defineProperty( subject , 'handleE$' , {
+    value: $_ensureFunc( subject.handleE$ ).bind( subject )
   });
 
-  $_defineProperty( subject , $_HANDLE_MOJO , {
-    value: $_ensureFunc( subject[ $_HANDLE_MOJO ] ).bind( subject )
-  });
+  /*$_defineProperty( subject , '__handleE$' , {
+    value: subject.__handleE$.bind( subject )
+  });*/
 
-  $_defineProperty( subject , __$_HANDLE_MOJO , {
-    value: subject[ __$_HANDLE_MOJO ].bind( subject )
-  });
-
-  $_forEach( $_keys( $_EVT ) , function( key ) {
+  /*$_forEach( $_keys( $_EVT ) , function( key ) {
     var evt = $_EVT[key];
-    var evtHandler = subject.__add( evt , subject[ __$_HANDLE_MOJO ] , subject );
+    var evtHandler = subject.__add( evt , subject.__handleE$ , subject );
     evtHandler.locked = true;
-  });
+  });*/
 }
 
 

@@ -1,16 +1,18 @@
 import {
   $Date,
-  $_keys,
-  $_create,
-  $_length,
-  $_forEach,
+  //$_keys,
+  //$_create,
+  //$_length,
+  //$_forEach,
+  $_indexOf,
   $_EVT,
+  $_EVT_ARRAY,
   $_PROTO
 } from 'static/shared';
 
 
-var PRIVATE_REGEXP = /^\${2}/;
-var CURRENT_TARGET = 'currentTarget';
+//var PRIVATE_REGEXP = /^\${2}/;
+//var CURRENT_TARGET = 'currentTarget';
 var CANCEL_BUBBLE = 'cancelBubble';
 var DEFAULT_PREVENTED = 'defaultPrevented';
 
@@ -22,7 +24,7 @@ export function Event( target , type ) {
   var that = this;
   that.target = target;
   that.type = type;
-  that[CURRENT_TARGET] = target;
+  //that[CURRENT_TARGET] = target;
   that[CANCEL_BUBBLE] = false;
   that[DEFAULT_PREVENTED] = false;
   that.timeStamp = $Date.now();
@@ -41,7 +43,7 @@ Event[$_PROTO] = {
 };
 
 
-export function cloneEvent( originalEvent , currentTarget ) {
+/*export function cloneEvent( originalEvent , currentTarget ) {
   
   var evtKeys = $_keys( originalEvent );
   var event = $_create( originalEvent );
@@ -53,10 +55,15 @@ export function cloneEvent( originalEvent , currentTarget ) {
   event[CURRENT_TARGET] = currentTarget;
 
   return event;
+}*/
+
+
+export function isPrivate( type ) {
+  return $_indexOf( $_EVT_ARRAY , type ) >= 0;
 }
 
 
-export function isLocked( type ) {
+/*export function isLocked( type ) {
   var pvt, keys = $_keys( $_EVT );
   for (var i = 0; i < $_length( keys ); i++) {
     pvt = $_EVT[keys[i]];
@@ -64,17 +71,17 @@ export function isLocked( type ) {
       return true;
     }
   }
-}
+}*/
 
 
-export function isPrivate( type ) {
+/*export function isPrivate( type ) {
   return PRIVATE_REGEXP.test( type );
-}
+}*/
 
 
-export function getPublic( type ) {
+/*export function getPublic( type ) {
   return type.replace( PRIVATE_REGEXP , '' );
-}
+}*/
 
 
 
