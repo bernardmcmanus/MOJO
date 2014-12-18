@@ -8,13 +8,22 @@ export var $Error = Error;
 export var $_PROTO = 'prototype';
 export var $_UNDEFINED;
 
-export var $_EVT = {
+/*export var $_EVT = {
   $set: '$$set',
   $unset: '$$unset',
   $when: '$$when',
   $emit: '$$emit',
-  $dispel: '$$dispel'
-  //$deref: '$$deref'
+  $dispel: '$$dispel',
+  $deref: '$$deref'
+};*/
+
+export var $_EVT = {
+  $set: '$set',
+  $unset: '$unset',
+  $when: '$when',
+  $emit: '$emit',
+  $dispel: '$dispel',
+  $deref: '$deref'
 };
 
 export var $_EVT_ARRAY = $_keys( $_EVT ).map(function( key ) {
@@ -82,7 +91,8 @@ export function $_has( subject , key ) {
 }
 
 export function $_ensureFunc( subject ) {
-  return subject || function() {};
+  //return subject || function() {};
+  return $_is( subject , 'function' ) ? subject : function(){};
 }
 
 export function $_defineProto( proto ) {

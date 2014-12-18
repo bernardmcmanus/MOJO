@@ -1,4 +1,4 @@
-MOJO
-====
+eMoney
+======
 
-#### The Modern JavaScript Object
+#### An event emitter that comes through in the clutch.

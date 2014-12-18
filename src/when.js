@@ -1,15 +1,11 @@
 import EventHandler from 'eventHandler';
-import {
-  Event,
-  isPrivate
-  //isLocked,
-  //cloneEvent
-} from 'event';
+import { Event , isPrivate } from 'event';
 import isE$ from 'static/is-emoney';
 import {
   $_length,
   $_shift,
   $_pop,
+  $_slice,
   $_indexOf,
   $_last,
   $_ensureArray,
@@ -58,16 +54,15 @@ export default {
     return that;
   },
 
-  $emit: function( eventList , args ) {
+  /*parsed == [ eventList , [args] , [callback] ]*/
+  $emit: function() {
 
     var that = this;
+    var parsed = that.__parse( $_EVT.$emit , arguments );
 
     that.$enq(function() {
-
-      eventList = eventList || that.__events;
-
-      $_forEach( eventList , function( type ) {
-        that.__invoke( type , args );
+      $_forEach( parsed[0] , function( type ) {
+        that.__invoke( type , parsed[1] , parsed[2] );
       });
     });
 
@@ -76,19 +71,17 @@ export default {
     return that;
   },
 
-  $dispel: function( eventList , E$Handler , force ) {
+  /*parsed == [ [eventList] , [force] , [E$Handler] ]*/
+  $dispel: function() {
 
     var that = this;
-    var func = $_getHandlerFunc( E$Handler );
+    var parsed = that.__parse( $_EVT.$dispel , arguments );
+    //console.log(parsed);
+    var func = $_getHandlerFunc( parsed[2] );
 
     that.$enq(function() {
-
-      eventList = eventList || that.__events;
-
-      $_forEach( eventList , function( type ) {
-        //if (force || !isPrivate( type )) {
-          that.__remove( type , func , !!force );
-        //}
+      $_forEach( parsed[0] , function( type ) {
+        that.__remove( type , func , !!parsed[1] );
       });
     });
 
@@ -97,26 +90,46 @@ export default {
     return that;
   },
 
-  /*args == [ eventList , [bindArgs] , [E$Handler] ]*/
+  /*args == parsed == [ eventList , [bindArgs] , [E$Handler] ]*/
   _$when: function( args , callback ) {
 
     callback = $_ensureFunc( callback );
 
     var that = this;
-    var eventList = $_shift( args );
-    var E$Handler = $_is( $_last( args ) , 'function' ) || isE$( $_last( args )) ? $_pop( args ) : that;
-    var bindArgs = args[0];
+    var parsed = that.__parse( $_EVT.$when , args );
     
-    var func = $_getHandlerFunc( E$Handler );
-    var context = $_getHandlerContext( E$Handler , func );
+    var func = $_getHandlerFunc( parsed[2] );
+    var context = $_getHandlerContext( parsed[2] , func );
 
     that.$enq(function() {
-      $_forEach( eventList , function( type , i ) {
-        var evtHandler = that.__add( type , func , context , bindArgs );
-        //evtHandler.events = $_ensureArray( eventList );
+      $_forEach( parsed[0] , function( type , i ) {
+        var evtHandler = that.__add( type , func , context , parsed[1] );
         callback( evtHandler );
       });
     });
+  },
+
+  __parse: function( type , args ) {
+
+    var that = this;
+    var parsed = [];
+
+    args = $_slice( args );
+
+    $_forEach([ 0 , 1 , 2 ] , function( i ) {
+      if (!i) {
+        parsed[0] = $_shift( args ) || that.__events;
+      }
+      else if (i < 2) {
+        parsed[2] = $_is($_last( args ) , 'function' ) || isE$($_last( args )) ? $_pop( args ) : null;
+        parsed[2] = type != $_EVT.$dispel ? parsed[2] || that : parsed[2];
+      }
+      else {
+        parsed[1] = args[0];
+      }
+    });
+
+    return parsed;
   },
 
   __pvt: function( eventType , privateType , args ) {
@@ -127,13 +140,14 @@ export default {
     }
   },
 
-  __invoke: function( type , args ) {
+  __invoke: function( type , args , callback ) {
 
     var that = this;
     var handlers = that.__get( type );
     var evt = new Event( that , type );
     
     $_forEach( handlers , function( evtHandler ) {
+      evtHandler.after = $_ensureFunc( callback );
       evtHandler.invoke( evt , args );
     });
 

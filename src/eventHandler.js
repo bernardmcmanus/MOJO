@@ -40,11 +40,9 @@ export default function EventHandler( func , context , bindArgs ) {
 
   that.func = func;
   that.context = context;
-  //that.locked = false;
-  //that.active = true;
-  //that.events = [];
   that.before = function() {};
   that.after = function() {};
+  //that.locked = false;
 
   that.bindArgs = $_ensureArray( bindArgs );
 }
@@ -55,7 +53,7 @@ EventHandler[$_PROTO] = {
 
     var that = this;
 
-    if (/*!that.active ||*/ evt.cancelBubble) {
+    if (evt.cancelBubble) {
       return;
     }
 
@@ -67,7 +65,9 @@ EventHandler[$_PROTO] = {
     args.unshift( evt );
     that.before( evt , func );
     func.apply( that.context , args );
-    that.after( evt , func );
+    if (!evt.defaultPrevented) {
+      that.after( evt , func );
+    }
   }
 
 };

@@ -1,10 +1,9 @@
 //import E$ from 'main';
-//import { isPrivate , getPublic } from 'event';
 import when from 'when';
-//import isE$ from 'static/is-emoney';
 import construct from 'static/construct';
 import {
   $_create,
+  $_delete,
   $_shift,
   $_length,
   $_EVT
@@ -25,24 +24,6 @@ function Proto() {
     construct( that );
   };
 
-  /*proto.__handleE$ = function() {
-
-    var that = this;
-    var args = $_slice( arguments );
-    var e = $_shift( args );
-    var type = $_shift( args );
-    var pubArgs = $_pop( args );
-    var shouldEmit = (type && getPublic( e.type ) !== type);
-
-    if (shouldEmit) {
-      that.$emit( getPublic( e.type ) , pubArgs );
-    }
-
-    if (e.type === $_EVT.$emit && isPrivate( type )) {
-      that.$emit( getPublic( type ) , pubArgs[1] );
-    }
-  };*/
-
   proto.$set = function( key , value ) {
     var that = this;
     that[key] = value;
@@ -52,19 +33,10 @@ function Proto() {
 
   proto.$unset = function( key ) {
     var that = this;
-    /*var target = that[key];
-    if (isE$( target )) {
-      target.$deref();
-    }*/
+    $_delete( that , key );
     that.$emit( $_EVT.$unset , [ key , [ key ]]);
     return that;
   };
-
-  /*proto.$deref = function() {
-    var that = this;
-    that.$emit( $_EVT.$deref );
-    that.$dispel( null , null , true );
-  };*/
 
   proto.$enq = function( task ) {
     var that = this;
@@ -83,7 +55,7 @@ function Proto() {
 
     that.__inprog = true;
 
-    while ($_length( stack ) > 0) {
+    while ($_length( stack )) {
       $_shift( stack )();
     }
     

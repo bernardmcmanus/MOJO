@@ -7,7 +7,9 @@ import {
 
 export default function( subjectProto ) {
 
-  var extendedProto = $_defineProto($_create( proto ));
+  var extendedProto = $_defineProto(
+    $_create( proto )
+  );
 
   for (var key in subjectProto) {
     extendedProto[key] = subjectProto[key];

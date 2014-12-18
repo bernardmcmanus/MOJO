@@ -1,11 +1,11 @@
 import E$ from './index';
 
 if (typeof define == 'function' && define.amd) {
-  define([] , function() { return E$ });
+  define([], function() { return E$ });
 }
-else if (typeof module != 'undefined' && module.exports) {
+else if (typeof exports == 'object') {
   module.exports = E$;
 }
-else if (typeof this != 'undefined') {
+else {
   this.E$ = E$;
 }

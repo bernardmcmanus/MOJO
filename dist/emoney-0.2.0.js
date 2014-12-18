@@ -1,4 +1,4 @@
-/*! emoney - 0.2.0 - Bernard McManus - es6-transpiler - gbac90b - 2014-12-12 */
+/*! emoney - 0.2.0 - Bernard McManus - regression - g9b7dc1 - 2014-12-18 */
 
 (function() {
     "use strict";
@@ -11,12 +11,12 @@
     var static$shared$$$_UNDEFINED;
 
     var static$shared$$$_EVT = {
-      $set: '$$set',
-      $unset: '$$unset',
-      $when: '$$when',
-      $emit: '$$emit',
-      $dispel: '$$dispel'
-      //$deref: '$$deref'
+      $set: '$set',
+      $unset: '$unset',
+      $when: '$when',
+      $emit: '$emit',
+      $dispel: '$dispel',
+      $deref: '$deref'
     };
 
     var static$shared$$$_EVT_ARRAY = static$shared$$$_keys( static$shared$$$_EVT ).map(function( key ) {
@@ -84,7 +84,8 @@
     }
 
     function static$shared$$$_ensureFunc( subject ) {
-      return subject || function() {};
+      //return subject || function() {};
+      return static$shared$$$_is( subject , 'function' ) ? subject : function(){};
     }
 
     function static$shared$$$_defineProto( proto ) {
@@ -158,11 +159,9 @@
 
       that.func = func;
       that.context = context;
-      //that.locked = false;
-      //that.active = true;
-      //that.events = [];
       that.before = function() {};
       that.after = function() {};
+      //that.locked = false;
 
       that.bindArgs = static$shared$$$_ensureArray( bindArgs );
     }
@@ -175,7 +174,7 @@
 
         var that = this;
 
-        if (/*!that.active ||*/ evt.cancelBubble) {
+        if (evt.cancelBubble) {
           return;
         }
 
@@ -187,7 +186,9 @@
         args.unshift( evt );
         that.before( evt , func );
         func.apply( that.context , args );
-        that.after( evt , func );
+        if (!evt.defaultPrevented) {
+          that.after( evt , func );
+        }
       }
 
     };
@@ -210,8 +211,6 @@
 
 
 
-    //var PRIVATE_REGEXP = /^\${2}/;
-    //var CURRENT_TARGET = 'currentTarget';
     var event$$CANCEL_BUBBLE = 'cancelBubble';
     var event$$DEFAULT_PREVENTED = 'defaultPrevented';
 
@@ -221,7 +220,6 @@
       var that = this;
       that.target = target;
       that.type = type;
-      //that[CURRENT_TARGET] = target;
       that[event$$CANCEL_BUBBLE] = false;
       that[event$$DEFAULT_PREVENTED] = false;
       that.timeStamp = static$shared$$$Date.now();
@@ -245,8 +243,25 @@
     }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     var static$is$emoney$$default = function( subject ) {
-      return static$shared$$$_is( subject , 'object' ) && 'handleE$' in subject;
+      return subject && static$shared$$$_is( subject , 'object' ) && 'handleE$' in subject;
     };
 
     function when$$indexOfHandler( handlerArray , func ) {
@@ -284,16 +299,15 @@
         return that;
       },
 
-      $emit: function( eventList , args ) {
+      /*parsed == [ eventList , [args] , [callback] ]*/
+      $emit: function() {
 
         var that = this;
+        var parsed = that.__parse( static$shared$$$_EVT.$emit , arguments );
 
         that.$enq(function() {
-
-          eventList = eventList || that.__events;
-
-          static$shared$$$_forEach( eventList , function( type ) {
-            that.__invoke( type , args );
+          static$shared$$$_forEach( parsed[0] , function( type ) {
+            that.__invoke( type , parsed[1] , parsed[2] );
           });
         });
 
@@ -302,19 +316,17 @@
         return that;
       },
 
-      $dispel: function( eventList , E$Handler , force ) {
+      /*parsed == [ [eventList] , [force] , [E$Handler] ]*/
+      $dispel: function() {
 
         var that = this;
-        var func = static$shared$$$_getHandlerFunc( E$Handler );
+        var parsed = that.__parse( static$shared$$$_EVT.$dispel , arguments );
+        //console.log(parsed);
+        var func = static$shared$$$_getHandlerFunc( parsed[2] );
 
         that.$enq(function() {
-
-          eventList = eventList || that.__events;
-
-          static$shared$$$_forEach( eventList , function( type ) {
-            //if (force || !isPrivate( type )) {
-              that.__remove( type , func , !!force );
-            //}
+          static$shared$$$_forEach( parsed[0] , function( type ) {
+            that.__remove( type , func , !!parsed[1] );
           });
         });
 
@@ -323,26 +335,46 @@
         return that;
       },
 
-      /*args == [ eventList , [bindArgs] , [E$Handler] ]*/
+      /*args == parsed == [ eventList , [bindArgs] , [E$Handler] ]*/
       _$when: function( args , callback ) {
 
         callback = static$shared$$$_ensureFunc( callback );
 
         var that = this;
-        var eventList = static$shared$$$_shift( args );
-        var E$Handler = static$shared$$$_is( static$shared$$$_last( args ) , 'function' ) || static$is$emoney$$default( static$shared$$$_last( args )) ? static$shared$$$_pop( args ) : that;
-        var bindArgs = args[0];
+        var parsed = that.__parse( static$shared$$$_EVT.$when , args );
         
-        var func = static$shared$$$_getHandlerFunc( E$Handler );
-        var context = static$shared$$$_getHandlerContext( E$Handler , func );
+        var func = static$shared$$$_getHandlerFunc( parsed[2] );
+        var context = static$shared$$$_getHandlerContext( parsed[2] , func );
 
         that.$enq(function() {
-          static$shared$$$_forEach( eventList , function( type , i ) {
-            var evtHandler = that.__add( type , func , context , bindArgs );
-            //evtHandler.events = $_ensureArray( eventList );
+          static$shared$$$_forEach( parsed[0] , function( type , i ) {
+            var evtHandler = that.__add( type , func , context , parsed[1] );
             callback( evtHandler );
           });
         });
+      },
+
+      __parse: function( type , args ) {
+
+        var that = this;
+        var parsed = [];
+
+        args = static$shared$$$_slice( args );
+
+        static$shared$$$_forEach([ 0 , 1 , 2 ] , function( i ) {
+          if (!i) {
+            parsed[0] = static$shared$$$_shift( args ) || that.__events;
+          }
+          else if (i < 2) {
+            parsed[2] = static$shared$$$_is(static$shared$$$_last( args ) , 'function' ) || static$is$emoney$$default(static$shared$$$_last( args )) ? static$shared$$$_pop( args ) : null;
+            parsed[2] = type != static$shared$$$_EVT.$dispel ? parsed[2] || that : parsed[2];
+          }
+          else {
+            parsed[1] = args[0];
+          }
+        });
+
+        return parsed;
       },
 
       __pvt: function( eventType , privateType , args ) {
@@ -353,13 +385,14 @@
         }
       },
 
-      __invoke: function( type , args ) {
+      __invoke: function( type , args , callback ) {
 
         var that = this;
         var handlers = that.__get( type );
         var evt = new event$$Event( that , type );
         
         static$shared$$$_forEach( handlers , function( evtHandler ) {
+          evtHandler.after = static$shared$$$_ensureFunc( callback );
           evtHandler.invoke( evt , args );
         });
 
@@ -417,8 +450,6 @@
 
     var static$construct$$default = function( subject ) {
 
-      //var inprog = false, __maxWatchers = 10, watchers = [];
-
       static$shared$$$_defineProperty( subject , '__stack' , {
         value: []
       });
@@ -427,24 +458,6 @@
         value: false,
         writable: true
       });
-
-      /*$_defineProperty( subject , '__inprog' , {
-        get: function() {
-          return inprog;
-        },
-        set: function( value ) {
-          inprog = value;
-        }
-      });*/
-
-      /*$_defineProperty( subject , '__maxWatchers' , {
-        get: function() {
-          return __maxWatchers;
-        },
-        set: function( value ) {
-          __maxWatchers = value;
-        }
-      });*/
 
       static$shared$$$_defineProperty( subject , '__events' , {
         get: function() {
@@ -456,28 +469,9 @@
         value: {}
       });
 
-      /*$_defineProperty( subject , 'watchers' , {
-        get: function() {
-          return watchers;
-        },
-        set: function( value ) {
-          watchers = $_isArray( value ) ? value : [];
-        }
-      });*/
-
       static$shared$$$_defineProperty( subject , 'handleE$' , {
         value: static$shared$$$_ensureFunc( subject.handleE$ ).bind( subject )
       });
-
-      /*$_defineProperty( subject , '__handleE$' , {
-        value: subject.__handleE$.bind( subject )
-      });*/
-
-      /*$_forEach( $_keys( $_EVT ) , function( key ) {
-        var evt = $_EVT[key];
-        var evtHandler = subject.__add( evt , subject.__handleE$ , subject );
-        evtHandler.locked = true;
-      });*/
     };
 
     var proto$$default = proto$$Proto();
@@ -494,24 +488,6 @@
         static$construct$$default( that );
       };
 
-      /*proto.__handleE$ = function() {
-
-        var that = this;
-        var args = $_slice( arguments );
-        var e = $_shift( args );
-        var type = $_shift( args );
-        var pubArgs = $_pop( args );
-        var shouldEmit = (type && getPublic( e.type ) !== type);
-
-        if (shouldEmit) {
-          that.$emit( getPublic( e.type ) , pubArgs );
-        }
-
-        if (e.type === $_EVT.$emit && isPrivate( type )) {
-          that.$emit( getPublic( type ) , pubArgs[1] );
-        }
-      };*/
-
       proto.$set = function( key , value ) {
         var that = this;
         that[key] = value;
@@ -521,19 +497,10 @@
 
       proto.$unset = function( key ) {
         var that = this;
-        /*var target = that[key];
-        if (isE$( target )) {
-          target.$deref();
-        }*/
+        static$shared$$$_delete( that , key );
         that.$emit( static$shared$$$_EVT.$unset , [ key , [ key ]]);
         return that;
       };
-
-      /*proto.$deref = function() {
-        var that = this;
-        that.$emit( $_EVT.$deref );
-        that.$dispel( null , null , true );
-      };*/
 
       proto.$enq = function( task ) {
         var that = this;
@@ -552,7 +519,7 @@
 
         that.__inprog = true;
 
-        while (static$shared$$$_length( stack ) > 0) {
+        while (static$shared$$$_length( stack )) {
           static$shared$$$_shift( stack )();
         }
         
@@ -582,7 +549,9 @@
 
     var static$create$$default = function( subjectProto ) {
 
-      var extendedProto = static$shared$$$_defineProto(static$shared$$$_create( proto$$default ));
+      var extendedProto = static$shared$$$_defineProto(
+        static$shared$$$_create( proto$$default )
+      );
 
       for (var key in subjectProto) {
         extendedProto[key] = subjectProto[key];
@@ -595,15 +564,16 @@
     main$$default.isE$ = static$is$emoney$$default;
     main$$default.create = static$create$$default;
     main$$default.construct = static$construct$$default;
+
     var $$index$$default = main$$default;
 
     if (typeof define == 'function' && define.amd) {
-      define([] , function() { return $$index$$default });
+      define([], function() { return $$index$$default });
     }
-    else if (typeof module != 'undefined' && module.exports) {
+    else if (typeof exports == 'object') {
       module.exports = $$index$$default;
     }
-    else if (typeof this != 'undefined') {
+    else {
       this.E$ = $$index$$default;
     }
 }).call(this);

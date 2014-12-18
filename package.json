@@ -12,7 +12,6 @@
     "mocha": ">=1.21.4",
     "chai": ">=1.9.1",
     "fs-extra": ">=0.9.1",
-    "wee-promise": ">=0.1.4",
     "colors": "~1.0.3",
     "grunt": "~0.4.2",
     "grunt-contrib-jshint": "~0.6.3",
