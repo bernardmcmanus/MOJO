@@ -1,4 +1,12 @@
-import { $_EVT , $_EVT_ARRAY } from 'static/shared';
+import {
+  $EVT,
+  $SET,
+  $UNSET,
+  $WHEN,
+  $EMIT,
+  $DISPEL,
+  $DEREF
+} from 'static/constants';
 import EventHandler from 'eventHandler';
 import {
   Event,
@@ -7,8 +15,13 @@ import {
 
 
 module.exports = {
-  '$_EVT': $_EVT,
-  '$_EVT_ARRAY': $_EVT_ARRAY,
+  $SET: $SET,
+  $UNSET: $UNSET,
+  $WHEN: $WHEN,
+  $EMIT: $EMIT,
+  $DISPEL: $DISPEL,
+  $DEREF: $DEREF,
+  $EVT: $EVT,
   'Event': {
     constructor: Event,
     isPrivate: isPrivate

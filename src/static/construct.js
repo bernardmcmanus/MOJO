@@ -1,3 +1,4 @@
+import { $HANDLE_E$ } from 'static/constants';
 import {
   $_defineProperty,
   $_keys,
@@ -26,8 +27,8 @@ export default function( subject ) {
     value: {}
   });
 
-  $_defineProperty( subject , 'handleE$' , {
-    value: $_ensureFunc( subject.handleE$ ).bind( subject )
+  $_defineProperty( subject , $HANDLE_E$ , {
+    value: $_ensureFunc( subject[ $HANDLE_E$ ] ).bind( subject )
   });
 }
 

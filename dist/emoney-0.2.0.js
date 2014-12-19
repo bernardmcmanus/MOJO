@@ -1,27 +1,47 @@
-/*! emoney - 0.2.0 - Bernard McManus - regression - g9b7dc1 - 2014-12-18 */
+/*! emoney - 0.2.0 - Bernard McManus - regression - g95f924 - 2014-12-19 */
 
 (function() {
     "use strict";
-    var static$shared$$$Array = Array;
-    var static$shared$$$Object = Object;
-    var static$shared$$$Date = Date;
-    var static$shared$$$Error = Error;
+    var static$constants$$$Array = Array;
+    var static$constants$$$Object = Object;
+    var static$constants$$$Date = Date;
+    var static$constants$$$Error = Error;
 
-    var static$shared$$$_PROTO = 'prototype';
-    var static$shared$$$_UNDEFINED;
+    var static$constants$$$HANDLE_E$ = 'handleE$';
+    var static$constants$$$PROTO = 'prototype';
+    var static$constants$$$FUNCTION = 'function';
+    var static$constants$$$OBJECT = 'object';
+    var static$constants$$$STRING = 'string';
+    var static$constants$$$UNDEFINED;
 
-    var static$shared$$$_EVT = {
-      $set: '$set',
-      $unset: '$unset',
-      $when: '$when',
-      $emit: '$emit',
-      $dispel: '$dispel',
-      $deref: '$deref'
-    };
+    var static$constants$$$CANCEL_BUBBLE = 'cancelBubble';
+    var static$constants$$$DEFAULT_PREVENTED = 'defaultPrevented';
 
-    var static$shared$$$_EVT_ARRAY = static$shared$$$_keys( static$shared$$$_EVT ).map(function( key ) {
-      return static$shared$$$_EVT[key];
-    });
+    var static$constants$$$SET = '$set';
+    var static$constants$$$UNSET = '$unset';
+    var static$constants$$$WHEN = '$when';
+    var static$constants$$$EMIT = '$emit';
+    var static$constants$$$DISPEL = '$dispel';
+    var static$constants$$$DEREF = '$deref';
+    var static$constants$$$EVT = [ static$constants$$$SET , static$constants$$$UNSET , static$constants$$$WHEN , static$constants$$$EMIT , static$constants$$$DISPEL , static$constants$$$DEREF ];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     function static$shared$$$_length( subject ) {
       return subject.length;
@@ -32,11 +52,11 @@
     }
 
     function static$shared$$$_isArray( subject ) {
-      return static$shared$$$Array.isArray( subject );
+      return static$constants$$$Array.isArray( subject );
     }
 
     function static$shared$$$_ensureArray( subject ) {
-      return (static$shared$$$_isArray( subject ) ? subject : ( subject !== static$shared$$$_UNDEFINED ? [ subject ] : [] ));
+      return (static$shared$$$_isArray( subject ) ? subject : ( subject !== static$constants$$$UNDEFINED ? [ subject ] : [] ));
     }
 
     function static$shared$$$_forEach( subject , callback ) {
@@ -44,11 +64,11 @@
     }
 
     function static$shared$$$_create( subject ) {
-      return static$shared$$$Object.create( subject );
+      return static$constants$$$Object.create( subject );
     }
 
     function static$shared$$$_defineProperty( subject , property , descriptor ) {
-      static$shared$$$Object.defineProperty( subject , property , descriptor );
+      static$constants$$$Object.defineProperty( subject , property , descriptor );
     }
 
     function static$shared$$$_delete( subject , key ) {
@@ -56,19 +76,19 @@
     }
 
     function static$shared$$$_keys( subject ) {
-      return static$shared$$$Object.keys( subject );
+      return static$constants$$$Object.keys( subject );
     }
 
     function static$shared$$$_shift( subject ) {
-      return static$shared$$$Array[static$shared$$$_PROTO].shift.call( subject );
+      return static$constants$$$Array[static$constants$$$PROTO].shift.call( subject );
     }
 
     function static$shared$$$_pop( subject ) {
-      return static$shared$$$Array[static$shared$$$_PROTO].pop.call( subject );
+      return static$constants$$$Array[static$constants$$$PROTO].pop.call( subject );
     }
 
     function static$shared$$$_slice( subject , start , end ) {
-      return static$shared$$$Array[static$shared$$$_PROTO].slice.call( subject , start || 0 , end );
+      return static$constants$$$Array[static$constants$$$PROTO].slice.call( subject , start || 0 , end );
     }
 
     function static$shared$$$_last( subject ) {
@@ -76,7 +96,7 @@
     }
 
     function static$shared$$$_is( subject , test ) {
-      return (typeof test == 'string') ? (typeof subject == test) : (subject instanceof test);
+      return (typeof test == static$constants$$$STRING) ? (typeof subject == test) : (subject instanceof test);
     }
 
     function static$shared$$$_has( subject , key ) {
@@ -85,7 +105,7 @@
 
     function static$shared$$$_ensureFunc( subject ) {
       //return subject || function() {};
-      return static$shared$$$_is( subject , 'function' ) ? subject : function(){};
+      return static$shared$$$_is( subject , static$constants$$$FUNCTION ) ? subject : function(){};
     }
 
     function static$shared$$$_defineProto( proto ) {
@@ -99,7 +119,7 @@
     }
 
     function static$shared$$$_getHandlerFunc( subject ) {
-      return (subject || {}).handleE$ ? subject.handleE$ : subject;
+      return (subject || {})[ static$constants$$$HANDLE_E$ ] ? subject[ static$constants$$$HANDLE_E$ ] : subject;
     }
 
     function static$shared$$$_getHandlerContext( handler , func ) {
@@ -159,22 +179,27 @@
 
       that.func = func;
       that.context = context;
-      that.before = function() {};
-      that.after = function() {};
       //that.locked = false;
 
       that.bindArgs = static$shared$$$_ensureArray( bindArgs );
+
+      that._reset( that );
     }
 
     var eventHandler$$default = eventHandler$$EventHandler;
 
-    eventHandler$$EventHandler[static$shared$$$_PROTO] = {
+    eventHandler$$EventHandler[static$constants$$$PROTO] = {
+
+      _reset: function( that ) {
+        that.before = static$shared$$$_ensureFunc();
+        that.after = static$shared$$$_ensureFunc();
+      },
 
       invoke: function( evt , invArgs ) {
 
         var that = this;
 
-        if (evt.cancelBubble) {
+        if (evt[static$constants$$$CANCEL_BUBBLE]) {
           return;
         }
 
@@ -186,9 +211,11 @@
         args.unshift( evt );
         that.before( evt , func );
         func.apply( that.context , args );
-        if (!evt.defaultPrevented) {
+        if (!evt[static$constants$$$DEFAULT_PREVENTED]) {
           that.after( evt , func );
         }
+
+        that._reset( that );
       }
 
     };
@@ -209,10 +236,6 @@
 
 
 
-
-
-    var event$$CANCEL_BUBBLE = 'cancelBubble';
-    var event$$DEFAULT_PREVENTED = 'defaultPrevented';
 
 
     var event$$default = event$$Event;
@@ -220,26 +243,26 @@
       var that = this;
       that.target = target;
       that.type = type;
-      that[event$$CANCEL_BUBBLE] = false;
-      that[event$$DEFAULT_PREVENTED] = false;
-      that.timeStamp = static$shared$$$Date.now();
+      that[static$constants$$$CANCEL_BUBBLE] = false;
+      that[static$constants$$$DEFAULT_PREVENTED] = false;
+      that.timeStamp = static$constants$$$Date.now();
     }
 
 
-    event$$Event[static$shared$$$_PROTO] = {
+    event$$Event[static$constants$$$PROTO] = {
 
       preventDefault: function() {
-        this[event$$DEFAULT_PREVENTED] = true;
+        this[static$constants$$$DEFAULT_PREVENTED] = true;
       },
 
       stopPropagation: function() {
-        this[event$$CANCEL_BUBBLE] = true;
+        this[static$constants$$$CANCEL_BUBBLE] = true;
       }
     };
 
 
     function event$$isPrivate( type ) {
-      return static$shared$$$_indexOf( static$shared$$$_EVT_ARRAY , type ) >= 0;
+      return static$shared$$$_indexOf( static$constants$$$EVT , type ) >= 0;
     }
 
 
@@ -261,7 +284,7 @@
 
 
     var static$is$emoney$$default = function( subject ) {
-      return subject && static$shared$$$_is( subject , 'object' ) && 'handleE$' in subject;
+      return subject && static$shared$$$_is( subject , static$constants$$$OBJECT ) && static$constants$$$HANDLE_E$ in subject;
     };
 
     function when$$indexOfHandler( handlerArray , func ) {
@@ -303,7 +326,7 @@
       $emit: function() {
 
         var that = this;
-        var parsed = that.__parse( static$shared$$$_EVT.$emit , arguments );
+        var parsed = that.__parse( static$constants$$$EMIT , arguments );
 
         that.$enq(function() {
           static$shared$$$_forEach( parsed[0] , function( type ) {
@@ -320,7 +343,7 @@
       $dispel: function() {
 
         var that = this;
-        var parsed = that.__parse( static$shared$$$_EVT.$dispel , arguments );
+        var parsed = that.__parse( static$constants$$$DISPEL , arguments );
         //console.log(parsed);
         var func = static$shared$$$_getHandlerFunc( parsed[2] );
 
@@ -341,7 +364,7 @@
         callback = static$shared$$$_ensureFunc( callback );
 
         var that = this;
-        var parsed = that.__parse( static$shared$$$_EVT.$when , args );
+        var parsed = that.__parse( static$constants$$$WHEN , args );
         
         var func = static$shared$$$_getHandlerFunc( parsed[2] );
         var context = static$shared$$$_getHandlerContext( parsed[2] , func );
@@ -362,13 +385,19 @@
         args = static$shared$$$_slice( args );
 
         static$shared$$$_forEach([ 0 , 1 , 2 ] , function( i ) {
+
+          // eventList
           if (!i) {
             parsed[0] = static$shared$$$_shift( args ) || that.__events;
           }
+          
+          // E$Handler / func
           else if (i < 2) {
-            parsed[2] = static$shared$$$_is(static$shared$$$_last( args ) , 'function' ) || static$is$emoney$$default(static$shared$$$_last( args )) ? static$shared$$$_pop( args ) : null;
-            parsed[2] = type != static$shared$$$_EVT.$dispel ? parsed[2] || that : parsed[2];
+            parsed[2] = static$shared$$$_is(static$shared$$$_last( args ) , static$constants$$$FUNCTION ) || static$is$emoney$$default(static$shared$$$_last( args )) ? static$shared$$$_pop( args ) : null;
+            parsed[2] = type != static$constants$$$DISPEL ? parsed[2] || that : parsed[2];
           }
+
+          // args / force
           else {
             parsed[1] = args[0];
           }
@@ -390,13 +419,15 @@
         var that = this;
         var handlers = that.__get( type );
         var evt = new event$$Event( that , type );
+
+        callback = static$shared$$$_ensureFunc( callback );
         
         static$shared$$$_forEach( handlers , function( evtHandler ) {
-          evtHandler.after = static$shared$$$_ensureFunc( callback );
+          evtHandler.after = callback;
           evtHandler.invoke( evt , args );
         });
 
-        that.__pvt( type , static$shared$$$_EVT.$emit , [ type , [ type , args ]]);
+        that.__pvt( type , static$constants$$$EMIT , [ type , [ type , args , callback ]]);
       },
 
       __get: function( eventType ) {
@@ -416,7 +447,7 @@
         handlerArray.push( evtHandler );
         that.handlers[type] = handlerArray;
 
-        that.__pvt( type , static$shared$$$_EVT.$when , [ type , [ type , args , func ]]);
+        that.__pvt( type , static$constants$$$WHEN , [ type , [ type , args , func ]]);
 
         return evtHandler;
       },
@@ -444,7 +475,7 @@
           handlers[type] = handlerArray;
         }
 
-        that.__pvt( type , static$shared$$$_EVT.$dispel , [ type , [ type , func , force ]]);
+        that.__pvt( type , static$constants$$$DISPEL , [ type , [ type , force , func ]]);
       }
     };
 
@@ -469,8 +500,8 @@
         value: {}
       });
 
-      static$shared$$$_defineProperty( subject , 'handleE$' , {
-        value: static$shared$$$_ensureFunc( subject.handleE$ ).bind( subject )
+      static$shared$$$_defineProperty( subject , static$constants$$$HANDLE_E$ , {
+        value: static$shared$$$_ensureFunc( subject[ static$constants$$$HANDLE_E$ ] ).bind( subject )
       });
     };
 
@@ -491,14 +522,14 @@
       proto.$set = function( key , value ) {
         var that = this;
         that[key] = value;
-        that.$emit( static$shared$$$_EVT.$set , [ key , [ key ]]);
+        that.$emit( static$constants$$$SET , [ key , [ key ]]);
         return that;
       };
 
       proto.$unset = function( key ) {
         var that = this;
         static$shared$$$_delete( that , key );
-        that.$emit( static$shared$$$_EVT.$unset , [ key , [ key ]]);
+        that.$emit( static$constants$$$UNSET , [ key , [ key ]]);
         return that;
       };
 
@@ -560,7 +591,7 @@
       return extendedProto;
     };
 
-    main$$default[static$shared$$$_PROTO] = static$shared$$$_defineProto( proto$$default );
+    main$$default[static$constants$$$PROTO] = static$shared$$$_defineProto( proto$$default );
     main$$default.isE$ = static$is$emoney$$default;
     main$$default.create = static$create$$default;
     main$$default.construct = static$construct$$default;

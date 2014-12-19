@@ -1,7 +1,12 @@
 import {
+  $CANCEL_BUBBLE,
+  $DEFAULT_PREVENTED,
+  $PROTO
+} from 'static/constants';
+import {
   $_slice,
   $_ensureArray,
-  $_PROTO
+  $_ensureFunc
 } from 'static/shared';
 
 /*export default function( func , context , bindArgs ) {
@@ -40,20 +45,25 @@ export default function EventHandler( func , context , bindArgs ) {
 
   that.func = func;
   that.context = context;
-  that.before = function() {};
-  that.after = function() {};
   //that.locked = false;
 
   that.bindArgs = $_ensureArray( bindArgs );
+
+  that._reset( that );
 }
 
-EventHandler[$_PROTO] = {
+EventHandler[$PROTO] = {
+
+  _reset: function( that ) {
+    that.before = $_ensureFunc();
+    that.after = $_ensureFunc();
+  },
 
   invoke: function( evt , invArgs ) {
 
     var that = this;
 
-    if (evt.cancelBubble) {
+    if (evt[$CANCEL_BUBBLE]) {
       return;
     }
 
@@ -65,9 +75,11 @@ EventHandler[$_PROTO] = {
     args.unshift( evt );
     that.before( evt , func );
     func.apply( that.context , args );
-    if (!evt.defaultPrevented) {
+    if (!evt[$DEFAULT_PREVENTED]) {
       that.after( evt , func );
     }
+
+    that._reset( that );
   }
 
 };

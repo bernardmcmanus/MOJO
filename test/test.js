@@ -1,6 +1,6 @@
 (function() {
 
-  'use strict';  
+  'use strict';
 
   var path = require( 'path' );
   var fs = require( 'fs-extra' );
@@ -42,7 +42,78 @@
 
 
 
-  describe( '$when' , function() {
+  describe( '$emit' , function() {
+
+    var events = [ 'gnarly' , 'rad' ];
+
+    it( 'should always execute handlers and callbacks by default' , function( done ) {
+      var arr = [];
+      emoney.$once( events , function( e ) {
+        expect( events ).to.contain( e.type );
+        arr.push( e.type );
+      })
+      .$once( events , function( e ) {
+        expect( events ).to.contain( e.type );
+        arr.push( e.type );
+      })
+      .$emit( events , function( e ) {
+        arr.push( e.type );
+        expect( e.defaultPrevented ).to.equal( false );
+      });
+      expect( arr.length ).to.equal( events.length * 4 );
+      done();
+    });
+
+    it( 'should execute handlers but NOT callbacks if default is prevented' , function( done ) {
+      var arr = [];
+      emoney.$once( events , function( e ) {
+        expect( e.defaultPrevented ).to.equal( false );
+        arr.push( e.type );
+      })
+      .$once( events , function( e ) {
+        e.preventDefault();
+        arr.push( e.type );
+        expect( e.defaultPrevented ).to.equal( true );
+      })
+      .$emit( events , function( e ) {
+        arr.push( e.type );
+        expect( e.defaultPrevented ).to.equal( false );
+      });
+      expect( arr.length ).to.equal( events.length * 3 );
+      done();
+    });
+
+    it( 'should stop execution if propagation is stopped' , function( done ) {
+      var arr = [];
+      emoney.$once( events , function( e ) {
+        e.stopPropagation();
+        expect( e.cancelBubble ).to.equal( true );
+        arr.push( e.type );
+      })
+      .$once( events , function( e ) {
+        arr.push( e.type );
+        expect( false ).to.equal( true );
+      })
+      .$emit( events , function( e ) {
+        expect( e.cancelBubble ).to.equal( true );
+        arr.push( e.type );
+      });
+      expect( arr.length ).to.equal( events.length * 2 );
+      emoney.$dispel();
+      done();
+    });
+
+    it( 'should emit the ' + TestModules.$EMIT + ' event' , function( done ) {
+      emoney.$once( TestModules.$EMIT , function( e , type , args ) {
+        expect( e.type ).to.equal( TestModules.$EMIT );
+        expect( e.target ).to.equal( emoney );
+        expect( type ).to.equal( 'gnarly' );
+        done();
+      });
+      emoney.$emit( 'gnarly' );
+    });
+
+    return;
 
     it( 'should bind args to each event handler' , function( done ) {
       var gnarly = new GNARLY(SEED);
@@ -65,8 +136,7 @@
     });
   });
 
-  return;
-
+  //return;
 
   describe( 'constructor' , function() {
 
@@ -112,8 +182,8 @@
     });
 
     it( 'should emit the $when event' , function( done ) {
-      emoney.$once( TestModules.$_EVT.$when , function( e ) {
-        expect( e.type ).to.equal( TestModules.$_EVT.$when );
+      emoney.$once( TestModules.$WHEN , function( e ) {
+        expect( e.type ).to.equal( TestModules.$WHEN );
         expect( emoney.handlers.gnarly.length ).to.equal( 1 );
         emoney.handlers.gnarly = [];
         done();
@@ -157,8 +227,8 @@
     });
 
     it( 'should emit the $emit event' , function( done ) {
-      emoney.$once( TestModules.$_EVT.$emit , function( e ) {
-        expect( e.type ).to.equal( TestModules.$_EVT.$emit );
+      emoney.$once( TestModules.$EMIT , function( e ) {
+        expect( e.type ).to.equal( TestModules.$EMIT );
         done();
       });
       emoney.__invoke( 'rad' );
@@ -206,8 +276,8 @@
     });
 
     it( 'should emit the $dispel event' , function( done ) {
-      emoney.$once( TestModules.$_EVT.$dispel , function( e , args ) {
-        expect( e.type ).to.equal( TestModules.$_EVT.$dispel );
+      emoney.$once( TestModules.$DISPEL , function( e , args ) {
+        expect( e.type ).to.equal( TestModules.$DISPEL );
         done();
       });
       emoney.__remove( 'gnarly' );
@@ -216,8 +286,8 @@
 
   describe( '$set' , function() {
 
-    it( 'should emit the ' + TestModules.$_EVT.$set + ' event' , function( done ) {
-      emoney.$once( TestModules.$_EVT.$set , function( e , key ) {
+    it( 'should emit the ' + TestModules.$SET + ' event' , function( done ) {
+      emoney.$once( TestModules.$SET , function( e , key ) {
         expect( key ).to.equal( 'gnarly' );
         expect( emoney[key] ).to.equal( true );
         done();
@@ -228,8 +298,8 @@
 
   describe( '$unset' , function() {
 
-    it( 'should emit the ' + TestModules.$_EVT.$unset + ' event' , function( done ) {
-      emoney.$once( TestModules.$_EVT.$unset , function( e , key ) {
+    it( 'should emit the ' + TestModules.$UNSET + ' event' , function( done ) {
+      emoney.$once( TestModules.$UNSET , function( e , key ) {
         expect( emoney ).to.not.have.property( 'gnarly' );
         expect( key ).to.equal( 'gnarly' );
         done();
@@ -267,6 +337,18 @@
       emoney.$emit( 'rad' );
       emoney.$dispel( 'rad' );
       done();
+    });
+
+    it( 'should emit the ' + TestModules.$WHEN + ' event' , function( done ) {
+      emoney.$once( TestModules.$WHEN , function( e , type , args ) {
+        expect( e.type ).to.equal( TestModules.$WHEN );
+        expect( e.target ).to.equal( emoney );
+        expect( type ).to.equal( 'gnarly' );
+        expect( args[2] ).to.equal( emoney.handleE$ );
+        done();
+      });
+      emoney.$when( 'gnarly' );
+      delete emoney.handlers.gnarly;
     });
   });
 
@@ -306,11 +388,11 @@
     });
 
     it( 'should not remove private handlers if force is falsy' , function( done ) {
-      TestModules.$_EVT_ARRAY.forEach(function( type ) {
+      TestModules.$EVT.forEach(function( type ) {
         emoney.$when( type );
       });
       emoney.$dispel();
-      TestModules.$_EVT_ARRAY.forEach(function( type ) {
+      TestModules.$EVT.forEach(function( type ) {
         expect( emoney.handlers ).to.have.property( type );
         expect( emoney.handlers[type].length ).to.equal( 1 );
       });
@@ -319,10 +401,22 @@
 
     it( 'should remove private handlers if force is truthy' , function( done ) {
       emoney.$dispel( null , true );
-      TestModules.$_EVT_ARRAY.forEach(function( type ) {
+      TestModules.$EVT.forEach(function( type ) {
         expect( emoney.handlers ).to.not.have.property( type );
       });
       done();
+    });
+
+    it( 'should emit the ' + TestModules.$DISPEL + ' event' , function( done ) {
+      emoney.$when( 'gnarly' );
+      emoney.$once( TestModules.$DISPEL , function( e , type , args ) {
+        expect( e.type ).to.equal( TestModules.$DISPEL );
+        expect( e.target ).to.equal( emoney );
+        expect( type ).to.equal( 'gnarly' );
+        expect( args[2] ).to.equal( null );
+        done();
+      });
+      emoney.$dispel( 'gnarly' );
     });
   });
 
@@ -366,6 +460,18 @@
       });
       emoney.$emit( 'rad' );
       done();
+    });
+
+    it( 'should emit the ' + TestModules.$WHEN + ' event' , function( done ) {
+      emoney.$once( TestModules.$WHEN , function( e , type , args ) {
+        expect( e.type ).to.equal( TestModules.$WHEN );
+        expect( e.target ).to.equal( emoney );
+        expect( type ).to.equal( 'gnarly' );
+        expect( args[2] ).to.equal( emoney.handleE$ );
+        done();
+      });
+      emoney.$when( 'gnarly' );
+      delete emoney.handlers.gnarly;
     });
   });
 
@@ -432,7 +538,7 @@
     describe( '#isPrivate' , function() {
 
       it( 'should determine whether an event string is designated as private' , function( done ) {
-        TestModules.$_EVT_ARRAY.forEach(function( evt ) {
+        TestModules.$EVT.forEach(function( evt ) {
           expect(Event.isPrivate( evt )).to.be.ok;
         });
         expect(Event.isPrivate( 'unset$' )).to.not.be.ok;

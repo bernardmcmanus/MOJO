@@ -1,34 +1,12 @@
-/* jshint -W093 */
-
-export var $Array = Array;
-export var $Object = Object;
-export var $Date = Date;
-export var $Error = Error;
-
-export var $_PROTO = 'prototype';
-export var $_UNDEFINED;
-
-/*export var $_EVT = {
-  $set: '$$set',
-  $unset: '$$unset',
-  $when: '$$when',
-  $emit: '$$emit',
-  $dispel: '$$dispel',
-  $deref: '$$deref'
-};*/
-
-export var $_EVT = {
-  $set: '$set',
-  $unset: '$unset',
-  $when: '$when',
-  $emit: '$emit',
-  $dispel: '$dispel',
-  $deref: '$deref'
-};
-
-export var $_EVT_ARRAY = $_keys( $_EVT ).map(function( key ) {
-  return $_EVT[key];
-});
+import {
+  $Array,
+  $Object,
+  $HANDLE_E$,
+  $PROTO,
+  $FUNCTION,
+  $STRING,
+  $UNDEFINED
+} from 'static/constants';
 
 export function $_length( subject ) {
   return subject.length;
@@ -43,7 +21,7 @@ export function $_isArray( subject ) {
 }
 
 export function $_ensureArray( subject ) {
-  return ($_isArray( subject ) ? subject : ( subject !== $_UNDEFINED ? [ subject ] : [] ));
+  return ($_isArray( subject ) ? subject : ( subject !== $UNDEFINED ? [ subject ] : [] ));
 }
 
 export function $_forEach( subject , callback ) {
@@ -67,15 +45,15 @@ export function $_keys( subject ) {
 }
 
 export function $_shift( subject ) {
-  return $Array[$_PROTO].shift.call( subject );
+  return $Array[$PROTO].shift.call( subject );
 }
 
 export function $_pop( subject ) {
-  return $Array[$_PROTO].pop.call( subject );
+  return $Array[$PROTO].pop.call( subject );
 }
 
 export function $_slice( subject , start , end ) {
-  return $Array[$_PROTO].slice.call( subject , start || 0 , end );
+  return $Array[$PROTO].slice.call( subject , start || 0 , end );
 }
 
 export function $_last( subject ) {
@@ -83,7 +61,7 @@ export function $_last( subject ) {
 }
 
 export function $_is( subject , test ) {
-  return (typeof test == 'string') ? (typeof subject == test) : (subject instanceof test);
+  return (typeof test == $STRING) ? (typeof subject == test) : (subject instanceof test);
 }
 
 export function $_has( subject , key ) {
@@ -92,7 +70,7 @@ export function $_has( subject , key ) {
 
 export function $_ensureFunc( subject ) {
   //return subject || function() {};
-  return $_is( subject , 'function' ) ? subject : function(){};
+  return $_is( subject , $FUNCTION ) ? subject : function(){};
 }
 
 export function $_defineProto( proto ) {
@@ -106,7 +84,7 @@ export function $_defineProto( proto ) {
 }
 
 export function $_getHandlerFunc( subject ) {
-  return (subject || {}).handleE$ ? subject.handleE$ : subject;
+  return (subject || {})[ $HANDLE_E$ ] ? subject[ $HANDLE_E$ ] : subject;
 }
 
 export function $_getHandlerContext( handler , func ) {

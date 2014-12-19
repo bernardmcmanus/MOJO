@@ -2,6 +2,12 @@ import EventHandler from 'eventHandler';
 import { Event , isPrivate } from 'event';
 import isE$ from 'static/is-emoney';
 import {
+  $WHEN,
+  $EMIT,
+  $DISPEL,
+  $FUNCTION
+} from 'static/constants';
+import {
   $_length,
   $_shift,
   $_pop,
@@ -15,8 +21,7 @@ import {
   $_delete,
   $_ensureFunc,
   $_getHandlerFunc,
-  $_getHandlerContext,
-  $_EVT
+  $_getHandlerContext
 } from 'static/shared';
 
 function indexOfHandler( handlerArray , func ) {
@@ -58,7 +63,7 @@ export default {
   $emit: function() {
 
     var that = this;
-    var parsed = that.__parse( $_EVT.$emit , arguments );
+    var parsed = that.__parse( $EMIT , arguments );
 
     that.$enq(function() {
       $_forEach( parsed[0] , function( type ) {
@@ -75,7 +80,7 @@ export default {
   $dispel: function() {
 
     var that = this;
-    var parsed = that.__parse( $_EVT.$dispel , arguments );
+    var parsed = that.__parse( $DISPEL , arguments );
     //console.log(parsed);
     var func = $_getHandlerFunc( parsed[2] );
 
@@ -96,7 +101,7 @@ export default {
     callback = $_ensureFunc( callback );
 
     var that = this;
-    var parsed = that.__parse( $_EVT.$when , args );
+    var parsed = that.__parse( $WHEN , args );
     
     var func = $_getHandlerFunc( parsed[2] );
     var context = $_getHandlerContext( parsed[2] , func );
@@ -117,13 +122,19 @@ export default {
     args = $_slice( args );
 
     $_forEach([ 0 , 1 , 2 ] , function( i ) {
+
+      // eventList
       if (!i) {
         parsed[0] = $_shift( args ) || that.__events;
       }
+      
+      // E$Handler / func
       else if (i < 2) {
-        parsed[2] = $_is($_last( args ) , 'function' ) || isE$($_last( args )) ? $_pop( args ) : null;
-        parsed[2] = type != $_EVT.$dispel ? parsed[2] || that : parsed[2];
+        parsed[2] = $_is($_last( args ) , $FUNCTION ) || isE$($_last( args )) ? $_pop( args ) : null;
+        parsed[2] = type != $DISPEL ? parsed[2] || that : parsed[2];
       }
+
+      // args / force
       else {
         parsed[1] = args[0];
       }
@@ -145,13 +156,15 @@ export default {
     var that = this;
     var handlers = that.__get( type );
     var evt = new Event( that , type );
+
+    callback = $_ensureFunc( callback );
     
     $_forEach( handlers , function( evtHandler ) {
-      evtHandler.after = $_ensureFunc( callback );
+      evtHandler.after = callback;
       evtHandler.invoke( evt , args );
     });
 
-    that.__pvt( type , $_EVT.$emit , [ type , [ type , args ]]);
+    that.__pvt( type , $EMIT , [ type , [ type , args , callback ]]);
   },
 
   __get: function( eventType ) {
@@ -171,7 +184,7 @@ export default {
     handlerArray.push( evtHandler );
     that.handlers[type] = handlerArray;
 
-    that.__pvt( type , $_EVT.$when , [ type , [ type , args , func ]]);
+    that.__pvt( type , $WHEN , [ type , [ type , args , func ]]);
 
     return evtHandler;
   },
@@ -199,7 +212,7 @@ export default {
       handlers[type] = handlerArray;
     }
 
-    that.__pvt( type , $_EVT.$dispel , [ type , [ type , func , force ]]);
+    that.__pvt( type , $DISPEL , [ type , [ type , force , func ]]);
   }
 };
 

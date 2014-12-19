@@ -2,11 +2,14 @@
 import when from 'when';
 import construct from 'static/construct';
 import {
+  $SET,
+  $UNSET
+} from 'static/constants';
+import {
   $_create,
   $_delete,
   $_shift,
-  $_length,
-  $_EVT
+  $_length
 } from 'static/shared';
 
 
@@ -27,14 +30,14 @@ function Proto() {
   proto.$set = function( key , value ) {
     var that = this;
     that[key] = value;
-    that.$emit( $_EVT.$set , [ key , [ key ]]);
+    that.$emit( $SET , [ key , [ key ]]);
     return that;
   };
 
   proto.$unset = function( key ) {
     var that = this;
     $_delete( that , key );
-    that.$emit( $_EVT.$unset , [ key , [ key ]]);
+    that.$emit( $UNSET , [ key , [ key ]]);
     return that;
   };
 
