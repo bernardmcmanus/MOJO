@@ -1,4 +1,4 @@
 MOJO
 ====
 
-#### The Modern JavaScript Object
+### DEPRECATED - please use [E$](https://github.com/elnarddogg/emoney) instead.
