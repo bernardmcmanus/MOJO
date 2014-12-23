@@ -1,11 +1,12 @@
+import Event from 'event';
 import EventHandler from 'eventHandler';
-import { Event , isPrivate } from 'event';
 import isE$ from 'static/is-emoney';
 import {
   $WHEN,
   $EMIT,
   $DISPEL,
-  $FUNCTION
+  $FUNCTION,
+  $WILDCARD
 } from 'static/constants';
 import {
   $_length,
@@ -17,7 +18,6 @@ import {
   $_ensureArray,
   $_forEach,
   $_is,
-  $_has,
   $_delete,
   $_ensureFunc,
   $_getHandlerFunc,
@@ -25,8 +25,7 @@ import {
 } from 'static/shared';
 
 function indexOfHandler( handlerArray , func ) {
-  var arr = $_ensureArray( handlerArray )
-  .map(function( evtHandler ) {
+  var arr = handlerArray.map(function( evtHandler ) {
     return evtHandler.func;
   });
   return $_indexOf( arr , func );
@@ -34,16 +33,15 @@ function indexOfHandler( handlerArray , func ) {
 
 export default {
 
+  /*parsed == [ eventList , [args] , [E$Handler] ]*/
   $once: function() {
 
     var that = this;
+    var parsed = that.__parse( $WHEN , arguments );
 
     that._$when( arguments , function( evtHandler ) {
       evtHandler.before = function( evt , func ) {
-        that.$enq(function() {
-          that.__remove( evt.type , func , true );
-        });
-        that.$flush();
+        that.$dispel( parsed[0] , true , func );
       };
     });
 
@@ -67,7 +65,9 @@ export default {
 
     that.$enq(function() {
       $_forEach( parsed[0] , function( type ) {
-        that.__invoke( type , parsed[1] , parsed[2] );
+        if (type != $WILDCARD) {
+          that.__invoke( type , parsed[1] , parsed[2] );
+        }
       });
     });
 
@@ -76,12 +76,11 @@ export default {
     return that;
   },
 
-  /*parsed == [ [eventList] , [force] , [E$Handler] ]*/
+  /*parsed == [ [eventList] , [wild] , [E$Handler] ]*/
   $dispel: function() {
 
     var that = this;
     var parsed = that.__parse( $DISPEL , arguments );
-    //console.log(parsed);
     var func = $_getHandlerFunc( parsed[2] );
 
     that.$enq(function() {
@@ -118,6 +117,7 @@ export default {
 
     var that = this;
     var parsed = [];
+    var events = that.__events;
 
     args = $_slice( args );
 
@@ -125,16 +125,16 @@ export default {
 
       // eventList
       if (!i) {
-        parsed[0] = $_shift( args ) || that.__events;
+        parsed[0] = $_shift( args ) || (type == $DISPEL ? that.__events : $WILDCARD);
       }
       
       // E$Handler / func
       else if (i < 2) {
         parsed[2] = $_is($_last( args ) , $FUNCTION ) || isE$($_last( args )) ? $_pop( args ) : null;
-        parsed[2] = type != $DISPEL ? parsed[2] || that : parsed[2];
+        parsed[2] = type != $DISPEL ? (parsed[2] || that) : parsed[2];
       }
 
-      // args / force
+      // args / wild
       else {
         parsed[1] = args[0];
       }
@@ -143,18 +143,22 @@ export default {
     return parsed;
   },
 
-  __pvt: function( eventType , privateType , args ) {
+  __get: function( eventType , wild ) {
     var that = this;
-    if ($_has( that.__get() , privateType ) && eventType != privateType) {
-      //console.log('emit private -> ' + privateType + ' (' + eventType + ')');
-      that.$emit( privateType , args );
+    var handlers = that.handlers;
+    var targetSet = eventType ? $_ensureArray( handlers[eventType] ) : handlers;
+    if (eventType && wild && eventType != $WILDCARD) {
+      targetSet = that.__get( $WILDCARD ).concat( targetSet ).sort(function( a , b ) {
+        return a.uts - b.uts;
+      });
     }
+    return targetSet;
   },
 
   __invoke: function( type , args , callback ) {
 
     var that = this;
-    var handlers = that.__get( type );
+    var handlers = that.__get( type , true );
     var evt = new Event( that , type );
 
     callback = $_ensureFunc( callback );
@@ -163,14 +167,6 @@ export default {
       evtHandler.after = callback;
       evtHandler.invoke( evt , args );
     });
-
-    that.__pvt( type , $EMIT , [ type , [ type , args , callback ]]);
-  },
-
-  __get: function( eventType ) {
-    var that = this;
-    var handlers = that.handlers;
-    return (eventType ? $_ensureArray( handlers[eventType] ) : handlers);
   },
 
   __add: function( type , func , context , args ) {
@@ -179,17 +175,13 @@ export default {
     var evtHandler = new EventHandler( func , context , args );
     var handlerArray = that.__get( type );
 
-    evtHandler.locked = isPrivate( type );
-
     handlerArray.push( evtHandler );
     that.handlers[type] = handlerArray;
-
-    that.__pvt( type , $WHEN , [ type , [ type , args , func ]]);
 
     return evtHandler;
   },
 
-  __remove: function( type , func , force ) {
+  __remove: function( type , func , wild ) {
 
     var that = this;
     var handlers = that.__get();
@@ -198,7 +190,7 @@ export default {
 
     while (i < $_length( handlerArray )) {
       index = (func ? indexOfHandler( handlerArray , func ) : i);
-      if (index >= 0 && (force || !handlerArray[i].locked)) {
+      if (index >= 0 && (wild || type != $WILDCARD)) {
         handlerArray.splice( index , 1 );
         i--;
       }
@@ -211,8 +203,6 @@ export default {
     else {
       handlers[type] = handlerArray;
     }
-
-    that.__pvt( type , $DISPEL , [ type , [ type , force , func ]]);
   }
 };
 

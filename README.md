@@ -1,4 +1,4 @@
 eMoney
 ======
 
-#### An event emitter that comes through in the clutch.
+> A lightweight event emitter for clients and servers.

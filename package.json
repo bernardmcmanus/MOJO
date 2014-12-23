@@ -1,7 +1,7 @@
 {
   "name": "emoney",
   "version": "0.2.0",
-  "description": "The Modern JavaScript Object",
+  "description": "A lightweight event emitter for clients and servers",
   "main": "dist/emoney-0.2.0.min.js",
   "scripts": {
     "test": "mocha test/test.js"
@@ -21,6 +21,7 @@
     "grunt-git-describe": "~2.0.2",
     "grunt-contrib-watch": ">=0.6.1",
     "grunt-import-clean": ">=0.1.0",
+    "grunt-jsdoc": ">=0.5.7",
     "es6-module-transpiler-amd-formatter": ">=0.0.1",
     "grunt-es6-module-transpiler": ">=0.6.0"
   },
@@ -31,9 +32,9 @@
   "keywords": [
     "javascript",
     "event",
-    "object",
-    "model",
-    "data"
+    "emitter",
+    "client",
+    "server"
   ],
   "author": {
     "name": "Bernard McManus",

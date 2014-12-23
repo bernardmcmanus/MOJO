@@ -1,23 +1,18 @@
 import {
-  $Date,
   $CANCEL_BUBBLE,
   $DEFAULT_PREVENTED,
-  $EVT,
   $PROTO
 } from 'static/constants';
-import { $_indexOf } from 'static/shared';
+import { $_uts } from 'static/shared';
 
 
-export default Event;
-
-
-export function Event( target , type ) {
+export default function Event( target , type ) {
   var that = this;
   that.target = target;
   that.type = type;
   that[$CANCEL_BUBBLE] = false;
   that[$DEFAULT_PREVENTED] = false;
-  that.timeStamp = $Date.now();
+  that.timeStamp = $_uts();
 }
 
 
@@ -31,11 +26,6 @@ Event[$PROTO] = {
     this[$CANCEL_BUBBLE] = true;
   }
 };
-
-
-export function isPrivate( type ) {
-  return $_indexOf( $EVT , type ) >= 0;
-}
 
 
 

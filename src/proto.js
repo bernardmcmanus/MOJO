@@ -1,15 +1,11 @@
-//import E$ from 'main';
 import when from 'when';
 import construct from 'static/construct';
-import {
-  $SET,
-  $UNSET
-} from 'static/constants';
+import { $WILDCARD } from 'static/constants';
 import {
   $_create,
-  $_delete,
   $_shift,
-  $_length
+  $_length,
+  $_forEach
 } from 'static/shared';
 
 
@@ -27,17 +23,19 @@ function Proto() {
     construct( that );
   };
 
-  proto.$set = function( key , value ) {
+  proto.$listen = function( emitters ) {
     var that = this;
-    that[key] = value;
-    that.$emit( $SET , [ key , [ key ]]);
+    $_forEach( emitters , function( emitter ) {
+      emitter.$when( $WILDCARD , that );
+    });
     return that;
   };
 
-  proto.$unset = function( key ) {
+  proto.$ignore = function( emitters ) {
     var that = this;
-    $_delete( that , key );
-    that.$emit( $UNSET , [ key , [ key ]]);
+    $_forEach( emitters , function( emitter ) {
+      emitter.$dispel( $WILDCARD , true , that );
+    });
     return that;
   };
 
@@ -52,7 +50,6 @@ function Proto() {
     var stack = that.__stack;
 
     if (that.__inprog) {
-      //E$.log('inprog');
       return;
     }
 

@@ -1,29 +1,26 @@
-/*! emoney - 0.2.0 - Bernard McManus - regression - g95f924 - 2014-12-19 */
+/*! emoney - 0.2.0 - Bernard McManus - regression - g47fd9a - 2014-12-23 */
 
 (function() {
     "use strict";
     var static$constants$$$Array = Array;
     var static$constants$$$Object = Object;
     var static$constants$$$Date = Date;
+    var static$constants$$$Math = Math;
     var static$constants$$$Error = Error;
 
-    var static$constants$$$HANDLE_E$ = 'handleE$';
     var static$constants$$$PROTO = 'prototype';
     var static$constants$$$FUNCTION = 'function';
     var static$constants$$$OBJECT = 'object';
     var static$constants$$$STRING = 'string';
     var static$constants$$$UNDEFINED;
 
-    var static$constants$$$CANCEL_BUBBLE = 'cancelBubble';
-    var static$constants$$$DEFAULT_PREVENTED = 'defaultPrevented';
-
-    var static$constants$$$SET = '$set';
-    var static$constants$$$UNSET = '$unset';
+    var static$constants$$$WILDCARD = '*';
     var static$constants$$$WHEN = '$when';
     var static$constants$$$EMIT = '$emit';
     var static$constants$$$DISPEL = '$dispel';
-    var static$constants$$$DEREF = '$deref';
-    var static$constants$$$EVT = [ static$constants$$$SET , static$constants$$$UNSET , static$constants$$$WHEN , static$constants$$$EMIT , static$constants$$$DISPEL , static$constants$$$DEREF ];
+    var static$constants$$$HANDLE_E$ = 'handleE$';
+    var static$constants$$$CANCEL_BUBBLE = 'cancelBubble';
+    var static$constants$$$DEFAULT_PREVENTED = 'defaultPrevented';
 
 
 
@@ -42,6 +39,15 @@
 
 
 
+
+    function static$shared$$$_uts() {
+      var now = static$constants$$$Date.now();
+      var last = static$shared$$$_uts.last;
+      var inc = 0.001;
+      last = (now === static$constants$$$Math.floor( last ) ? last : now) + inc;
+      static$shared$$$_uts.last = last;
+      return last;
+    }
 
     function static$shared$$$_length( subject ) {
       return subject.length;
@@ -99,12 +105,7 @@
       return (typeof test == static$constants$$$STRING) ? (typeof subject == test) : (subject instanceof test);
     }
 
-    function static$shared$$$_has( subject , key ) {
-      return subject.hasOwnProperty( key );
-    }
-
     function static$shared$$$_ensureFunc( subject ) {
-      //return subject || function() {};
       return static$shared$$$_is( subject , static$constants$$$FUNCTION ) ? subject : function(){};
     }
 
@@ -173,14 +174,55 @@
 
 
     var main$$default = main$$E$;
+    function event$$Event( target , type ) {
+      var that = this;
+      that.target = target;
+      that.type = type;
+      that[static$constants$$$CANCEL_BUBBLE] = false;
+      that[static$constants$$$DEFAULT_PREVENTED] = false;
+      that.timeStamp = static$shared$$$_uts();
+    }
+
+
+    var event$$default = event$$Event;
+
+
+    event$$Event[static$constants$$$PROTO] = {
+
+      preventDefault: function() {
+        this[static$constants$$$DEFAULT_PREVENTED] = true;
+      },
+
+      stopPropagation: function() {
+        this[static$constants$$$CANCEL_BUBBLE] = true;
+      }
+    };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     function eventHandler$$EventHandler( func , context , bindArgs ) {
 
       var that = this;
 
       that.func = func;
       that.context = context;
-      //that.locked = false;
-
+      that.uts = static$shared$$$_uts();
       that.bindArgs = static$shared$$$_ensureArray( bindArgs );
 
       that._reset( that );
@@ -238,58 +280,12 @@
 
 
 
-    var event$$default = event$$Event;
-    function event$$Event( target , type ) {
-      var that = this;
-      that.target = target;
-      that.type = type;
-      that[static$constants$$$CANCEL_BUBBLE] = false;
-      that[static$constants$$$DEFAULT_PREVENTED] = false;
-      that.timeStamp = static$constants$$$Date.now();
-    }
-
-
-    event$$Event[static$constants$$$PROTO] = {
-
-      preventDefault: function() {
-        this[static$constants$$$DEFAULT_PREVENTED] = true;
-      },
-
-      stopPropagation: function() {
-        this[static$constants$$$CANCEL_BUBBLE] = true;
-      }
-    };
-
-
-    function event$$isPrivate( type ) {
-      return static$shared$$$_indexOf( static$constants$$$EVT , type ) >= 0;
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     var static$is$emoney$$default = function( subject ) {
       return subject && static$shared$$$_is( subject , static$constants$$$OBJECT ) && static$constants$$$HANDLE_E$ in subject;
     };
 
     function when$$indexOfHandler( handlerArray , func ) {
-      var arr = static$shared$$$_ensureArray( handlerArray )
-      .map(function( evtHandler ) {
+      var arr = handlerArray.map(function( evtHandler ) {
         return evtHandler.func;
       });
       return static$shared$$$_indexOf( arr , func );
@@ -297,16 +293,15 @@
 
     var when$$default = {
 
+      /*parsed == [ eventList , [args] , [E$Handler] ]*/
       $once: function() {
 
         var that = this;
+        var parsed = that.__parse( static$constants$$$WHEN , arguments );
 
         that._$when( arguments , function( evtHandler ) {
           evtHandler.before = function( evt , func ) {
-            that.$enq(function() {
-              that.__remove( evt.type , func , true );
-            });
-            that.$flush();
+            that.$dispel( parsed[0] , true , func );
           };
         });
 
@@ -330,7 +325,9 @@
 
         that.$enq(function() {
           static$shared$$$_forEach( parsed[0] , function( type ) {
-            that.__invoke( type , parsed[1] , parsed[2] );
+            if (type != static$constants$$$WILDCARD) {
+              that.__invoke( type , parsed[1] , parsed[2] );
+            }
           });
         });
 
@@ -339,12 +336,11 @@
         return that;
       },
 
-      /*parsed == [ [eventList] , [force] , [E$Handler] ]*/
+      /*parsed == [ [eventList] , [wild] , [E$Handler] ]*/
       $dispel: function() {
 
         var that = this;
         var parsed = that.__parse( static$constants$$$DISPEL , arguments );
-        //console.log(parsed);
         var func = static$shared$$$_getHandlerFunc( parsed[2] );
 
         that.$enq(function() {
@@ -381,6 +377,7 @@
 
         var that = this;
         var parsed = [];
+        var events = that.__events;
 
         args = static$shared$$$_slice( args );
 
@@ -388,16 +385,16 @@
 
           // eventList
           if (!i) {
-            parsed[0] = static$shared$$$_shift( args ) || that.__events;
+            parsed[0] = static$shared$$$_shift( args ) || (type == static$constants$$$DISPEL ? that.__events : static$constants$$$WILDCARD);
           }
           
           // E$Handler / func
           else if (i < 2) {
             parsed[2] = static$shared$$$_is(static$shared$$$_last( args ) , static$constants$$$FUNCTION ) || static$is$emoney$$default(static$shared$$$_last( args )) ? static$shared$$$_pop( args ) : null;
-            parsed[2] = type != static$constants$$$DISPEL ? parsed[2] || that : parsed[2];
+            parsed[2] = type != static$constants$$$DISPEL ? (parsed[2] || that) : parsed[2];
           }
 
-          // args / force
+          // args / wild
           else {
             parsed[1] = args[0];
           }
@@ -406,19 +403,23 @@
         return parsed;
       },
 
-      __pvt: function( eventType , privateType , args ) {
+      __get: function( eventType , wild ) {
         var that = this;
-        if (static$shared$$$_has( that.__get() , privateType ) && eventType != privateType) {
-          //console.log('emit private -> ' + privateType + ' (' + eventType + ')');
-          that.$emit( privateType , args );
+        var handlers = that.handlers;
+        var targetSet = eventType ? static$shared$$$_ensureArray( handlers[eventType] ) : handlers;
+        if (eventType && wild && eventType != static$constants$$$WILDCARD) {
+          targetSet = that.__get( static$constants$$$WILDCARD ).concat( targetSet ).sort(function( a , b ) {
+            return a.uts - b.uts;
+          });
         }
+        return targetSet;
       },
 
       __invoke: function( type , args , callback ) {
 
         var that = this;
-        var handlers = that.__get( type );
-        var evt = new event$$Event( that , type );
+        var handlers = that.__get( type , true );
+        var evt = new event$$default( that , type );
 
         callback = static$shared$$$_ensureFunc( callback );
         
@@ -426,14 +427,6 @@
           evtHandler.after = callback;
           evtHandler.invoke( evt , args );
         });
-
-        that.__pvt( type , static$constants$$$EMIT , [ type , [ type , args , callback ]]);
-      },
-
-      __get: function( eventType ) {
-        var that = this;
-        var handlers = that.handlers;
-        return (eventType ? static$shared$$$_ensureArray( handlers[eventType] ) : handlers);
       },
 
       __add: function( type , func , context , args ) {
@@ -442,17 +435,13 @@
         var evtHandler = new eventHandler$$default( func , context , args );
         var handlerArray = that.__get( type );
 
-        evtHandler.locked = event$$isPrivate( type );
-
         handlerArray.push( evtHandler );
         that.handlers[type] = handlerArray;
-
-        that.__pvt( type , static$constants$$$WHEN , [ type , [ type , args , func ]]);
 
         return evtHandler;
       },
 
-      __remove: function( type , func , force ) {
+      __remove: function( type , func , wild ) {
 
         var that = this;
         var handlers = that.__get();
@@ -461,7 +450,7 @@
 
         while (i < static$shared$$$_length( handlerArray )) {
           index = (func ? when$$indexOfHandler( handlerArray , func ) : i);
-          if (index >= 0 && (force || !handlerArray[i].locked)) {
+          if (index >= 0 && (wild || type != static$constants$$$WILDCARD)) {
             handlerArray.splice( index , 1 );
             i--;
           }
@@ -474,8 +463,6 @@
         else {
           handlers[type] = handlerArray;
         }
-
-        that.__pvt( type , static$constants$$$DISPEL , [ type , [ type , force , func ]]);
       }
     };
 
@@ -519,17 +506,19 @@
         static$construct$$default( that );
       };
 
-      proto.$set = function( key , value ) {
+      proto.$listen = function( emitters ) {
         var that = this;
-        that[key] = value;
-        that.$emit( static$constants$$$SET , [ key , [ key ]]);
+        static$shared$$$_forEach( emitters , function( emitter ) {
+          emitter.$when( static$constants$$$WILDCARD , that );
+        });
         return that;
       };
 
-      proto.$unset = function( key ) {
+      proto.$ignore = function( emitters ) {
         var that = this;
-        static$shared$$$_delete( that , key );
-        that.$emit( static$constants$$$UNSET , [ key , [ key ]]);
+        static$shared$$$_forEach( emitters , function( emitter ) {
+          emitter.$dispel( static$constants$$$WILDCARD , true , that );
+        });
         return that;
       };
 
@@ -544,7 +533,6 @@
         var stack = that.__stack;
 
         if (that.__inprog) {
-          //E$.log('inprog');
           return;
         }
 

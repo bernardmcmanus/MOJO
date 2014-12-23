@@ -14,13 +14,22 @@
 
 
   E$.log = function() {
-    var args = arguments;
-    return function( showHidden ) {
-      args = Array.prototype.map.call( args , function( arg ) {
-        return util.inspect( arg , { depth: null, showHidden: !!showHidden, colors: true });
+    var args = args = Array.prototype.map.call( arguments , function( arg ) {
+      return util.inspect( arg , { depth: null, showHidden: false, colors: true });
+    });
+    console.log.apply( null , args );
+  };
+
+  E$.aggregate = function( arr ) {
+    var aggregator = E$();
+    arr.forEach(function( em ) {
+      aggregator.$when( '*' , function() {
+        var args = Array.prototype.slice.call( arguments );
+        var e = args.shift();
+        em.$emit( e.type , args );
       });
-      console.log.apply( null , args );
-    };
+    });
+    return aggregator;
   };
 
 
@@ -35,12 +44,224 @@
 
   GNARLY.prototype = E$.create({
     tubes: function() {},
-    handleE$: function() {console.log(arguments);}
+    handleE$: function() {}
   });
 
   var emoney = E$( SEED );
 
 
+  describe( 'constructor' , function() {
+
+    it( 'should create a new E$ instance' , function( done ) {
+      expect( emoney ).to.be.an.instanceOf( E$ );
+      done();
+    });
+  });
+
+  describe( 'prototype' , function() {
+
+    it( 'should have no enumerable properties when E$ is created with constructor' , function( done ) {
+      var keys = [];
+      for (var key in emoney) {
+        keys.push( key );
+      }
+      expect( keys.length ).to.equal(
+        Object.keys( SEED ).length
+      );
+      done();
+    });
+    
+    it( 'should inherit no enumerable properties when E$ is created with E$.create / E$.construct' , function( done ) {
+      var emoneyIsh = new GNARLY();
+      var keys = [];
+      for (var key in emoneyIsh) {
+        keys.push( key );
+      }
+      expect( keys.length ).to.equal(
+        Object.keys( GNARLY.prototype ).length
+      );
+      done();
+    });
+  });
+
+  describe( '#__add' , function() {
+
+    it( 'should push to the handlers[type] array' , function( done ) {
+      emoney.__add( 'gnarly' , Test , null );
+      expect( emoney.handlers.gnarly.length ).to.equal( 1 );
+      emoney.handlers.gnarly = [];
+      done();
+    });
+  });
+
+  describe( '#__get' , function() {
+
+    it( 'should return all handlers if type is falsy' , function( done ) {
+      var handlers = emoney.__get();
+      expect( handlers ).to.be.an.instanceOf( Object );
+      done();
+    });
+    
+    it( 'should return handlers[type] if type is defined' , function( done ) {
+      var handlerArray = emoney.__get( 'gnarly' );
+      expect( handlerArray ).to.be.an.instanceOf( Array );
+      done();
+    });
+    
+    it( 'should return an empty array if type does not exist' , function( done ) {
+      var handlerArray = emoney.__get( 'rad' );
+      expect( handlerArray ).to.be.an.instanceOf( Array );
+      expect( handlerArray.length ).to.equal( 0 );
+      expect( emoney.handlers ).to.not.have.property( 'rad' );
+      done();
+    });
+  });
+
+  describe( '#__invoke' , function() {
+
+    it( 'should invoke event handlers in the handlers[type] array' , function( done ) {
+      emoney.$once( 'rad' , function( e , test1 , test2 ) {
+        expect( test1 ).to.equal( true );
+        expect( test2 ).to.equal( false );
+        done();
+      });
+      emoney.__invoke( 'rad' , [ true , false ]);
+    });
+  });
+
+  describe( '#__remove' , function() {
+
+    it( 'should delete the handlers[type] array if length is 0' , function( done ) {
+      emoney.__remove( 'gnarly' , Test );
+      expect( emoney.handlers ).to.not.have.property( 'gnarly' );
+      done();
+    });
+    
+    it( 'should delete the handlers[type] array if func is falsy' , function( done ) {
+      emoney.__add( 'gnarly' , Test , null );
+      expect( emoney.handlers.gnarly.length ).to.equal( 1 );
+      emoney.__remove( 'gnarly' );
+      expect( emoney.handlers ).to.not.have.property( 'gnarly' );
+      done();
+    });
+    
+    it( 'should remove all matched handlers' , function( done ) {
+      emoney.__add( 'gnarly' , Test , null );
+      emoney.__add( 'gnarly' , Test , null );
+      expect( emoney.handlers.gnarly.length ).to.equal( 2 );
+      emoney.__remove( 'gnarly' , Test );
+      expect( emoney.handlers ).to.not.have.property( 'gnarly' );
+      done();
+    });
+    
+    it( 'should remove only handlers matched by event type and handler function' , function( done ) {
+      emoney.__add( 'gnarly' , Test , null );
+      emoney.__add( 'gnarly' , Test2 , null );
+      emoney.__add( 'rad' , Test , null );
+      emoney.__add( 'rad' , Test2 , null );
+      expect( emoney.handlers.gnarly.length ).to.equal( 2 );
+      expect( emoney.handlers.rad.length ).to.equal( 2 );
+      emoney.__remove( 'gnarly' , Test );
+      emoney.__remove( 'rad' , Test );
+      expect( emoney.handlers.gnarly.length ).to.equal( 1 );
+      expect( emoney.handlers.rad.length ).to.equal( 1 );
+      emoney.$dispel();
+      done();
+    });
+  });
+
+  describe( '$when' , function() {
+    
+    it( 'should add an event handler' , function( done ) {
+      emoney.$when( 'gnarly' , Test );
+      expect( emoney.handlers ).to.have.property( 'gnarly' );
+      expect( emoney.handlers.gnarly.length ).to.equal( 1 );
+      emoney.$dispel();
+      done();
+    });
+
+    it( 'should use subject.handleE$ when handler is falsy' , function( done ) {
+      emoney.$when( 'rad' );
+      expect( emoney.handlers.rad[0].func ).to.equal( emoney.handleE$ );
+      emoney.$dispel( 'rad' );
+      done();
+    });
+
+    it( 'should bind args to each event handler' , function( done ) {
+      var arr = [];
+      for (var i = 0; i < 10; i++) { arr.push( i ) }
+      arr.forEach(function( i ) {
+        emoney.$when( 'rad' , [ i , 'test-' + i ] , function( e , n , test ) {
+          expect( n ).to.equal( i );
+          expect( test ).to.equal( 'test-' + i );
+        });
+      });
+      emoney.$emit( 'rad' );
+      emoney.$dispel( 'rad' );
+      done();
+    });
+
+    it( 'should add a wildcard handler when event is falsy' , function( done ) {
+      emoney.$when();
+      expect( emoney.handlers ).to.have.property( TestModules.$WILDCARD );
+      emoney.$dispel( null , true );
+      done();
+    });
+  });
+
+  describe( '$once' , function() {
+
+    it( 'should remove an event handler after it is executed' , function( done ) {
+      emoney.$once( 'gnarly' , function() {
+        expect( emoney.handlers ).to.have.property( 'gnarly' );
+      });
+      emoney.$emit( 'gnarly' );
+      expect( emoney.handlers ).to.not.have.property( 'gnarly' );
+      done();
+    });
+
+    it( 'should only be executed for one event type in eventList' , function( done ) {
+      var eventList = [ 'gnarly' , 'rad' ];
+      var result = [];
+      emoney.$once( eventList , function( e ) {
+        result.push( e.type );
+        eventList.forEach(function( type ) {
+          expect( emoney.handlers ).to.have.property( type );
+        });
+      });
+      emoney.$emit( eventList );
+      emoney.$emit( eventList );
+      eventList.forEach(function( type ) {
+        expect( emoney.handlers ).to.not.have.property( type );
+      });
+      expect( result ).to.eql( eventList );
+      done();
+    });
+
+    it( 'should bind args to each event handler' , function( done ) {
+      var arr = [];
+      for (var i = 0; i < 10; i++) { arr.push( i ) }
+      arr.forEach(function( i ) {
+        emoney.$once( 'rad' , [ i , 'test-' + i ] , function( e , n , test ) {
+          expect( n ).to.equal( i );
+          expect( test ).to.equal( 'test-' + i );
+        });
+      });
+      emoney.$emit( 'rad' );
+      done();
+    });
+
+    it( 'should remove the wildcard handler after an $emit' , function( done ) {
+      var events = [ 'gnarly' , 'rad' ], emitted = [];
+      emoney.$once( TestModules.$WILDCARD , function( e ) {
+        emitted.push( e.type );
+      });
+      emoney.$emit( events );
+      emoney.$emit( events );
+      expect( emitted ).to.eql( events );
+      done();
+    });
+  });
 
   describe( '$emit' , function() {
 
@@ -103,252 +324,27 @@
       done();
     });
 
-    it( 'should emit the ' + TestModules.$EMIT + ' event' , function( done ) {
-      emoney.$once( TestModules.$EMIT , function( e , type , args ) {
-        expect( e.type ).to.equal( TestModules.$EMIT );
-        expect( e.target ).to.equal( emoney );
-        expect( type ).to.equal( 'gnarly' );
-        done();
+    it( 'should always execute wildcard handlers' , function( done ) {
+      var events = [ 'gnarly' , 'rad' ], emitted = [];
+      emoney.$when( TestModules.$WILDCARD , function( e ) {
+        emitted.push( e.type );
       });
-      emoney.$emit( 'gnarly' );
+      emoney.$emit( events );
+      expect( emitted ).to.eql( events );
+      emoney.$dispel( null , true );
+      done();
     });
 
-    return;
-
-    it( 'should bind args to each event handler' , function( done ) {
-      var gnarly = new GNARLY(SEED);
-      gnarly.$when([ 'gnarly' , 'rad' ]);
-      gnarly.$when([ 'gnarly' , 'rad' ], function( e ) {
-        E$.log('when1 | ' + e.type + ' | e.defaultPrevented -> ' + e.defaultPrevented)();
+    it( 'should not explicitly emit wildcard events' , function( done ) {
+      var emitted = [];
+      emoney.$when( TestModules.$WILDCARD , function( e ) {
+        emitted.push( e.type );
       });
-      gnarly.$when([ 'gnarly' , 'rad' ], function( e ) {
-        if (e.type == 'gnarly') {
-          e.preventDefault();
-          //e.stopPropagation();
-        }
-        E$.log('when2 | ' + e.type + ' | e.defaultPrevented -> ' + e.defaultPrevented)();
-      });
-      gnarly.$emit([ 'gnarly' /*, 'rad'*/ ], function( e ) {
-        E$.log('callback | ' + e.type + ' | e.defaultPrevented -> ' + e.defaultPrevented)();
-      });
-      gnarly.$dispel([ 'gnarly' , 'rad' ]);
+      emoney.$emit();
+      emoney.$emit( TestModules.$WILDCARD );
+      expect( emitted.length ).to.equal( 0 );
+      emoney.$dispel( null , true );
       done();
-    });
-  });
-
-  //return;
-
-  describe( 'constructor' , function() {
-
-    it( 'should create a new E$ instance' , function( done ) {
-      expect( emoney ).to.be.an.instanceOf( E$ );
-      done();
-    });
-  });
-
-  describe( 'prototype' , function() {
-
-    it( 'should have no enumerable properties when E$ is created with constructor' , function( done ) {
-      var keys = [];
-      for (var key in emoney) {
-        keys.push( key );
-      }
-      expect( keys.length ).to.equal(
-        Object.keys( SEED ).length
-      );
-      done();
-    });
-    
-    it( 'should inherit no enumerable properties when E$ is created with E$.create / E$.construct' , function( done ) {
-      var emoneyIsh = new GNARLY();
-      var keys = [];
-      for (var key in emoneyIsh) {
-        keys.push( key );
-      }
-      expect( keys.length ).to.equal(
-        Object.keys( GNARLY.prototype ).length
-      );
-      done();
-    });
-  });
-
-  describe( '#__add' , function() {
-
-    it( 'should push to the handlers[type] array' , function( done ) {
-      emoney.__add( 'gnarly' , Test , null );
-      expect( emoney.handlers.gnarly.length ).to.equal( 1 );
-      emoney.handlers.gnarly = [];
-      done();
-    });
-
-    it( 'should emit the $when event' , function( done ) {
-      emoney.$once( TestModules.$WHEN , function( e ) {
-        expect( e.type ).to.equal( TestModules.$WHEN );
-        expect( emoney.handlers.gnarly.length ).to.equal( 1 );
-        emoney.handlers.gnarly = [];
-        done();
-      });
-      emoney.__add( 'gnarly' , Test , null );
-    });
-  });
-
-  describe( '#__get' , function() {
-
-    it( 'should return all handlers if type is falsy' , function( done ) {
-      var handlers = emoney.__get();
-      expect( handlers ).to.be.an.instanceOf( Object );
-      done();
-    });
-    
-    it( 'should return handlers[type] if type is defined' , function( done ) {
-      var handlerArray = emoney.__get( 'gnarly' );
-      expect( handlerArray ).to.be.an.instanceOf( Array );
-      done();
-    });
-    
-    it( 'should return an empty array if type does not exist' , function( done ) {
-      var handlerArray = emoney.__get( 'rad' );
-      expect( handlerArray ).to.be.an.instanceOf( Array );
-      expect( handlerArray.length ).to.equal( 0 );
-      expect( emoney.handlers ).to.not.have.property( 'rad' );
-      done();
-    });
-  });
-
-  describe( '#__invoke' , function() {
-
-    it( 'should invoke event handlers in the handlers[type] array' , function( done ) {
-      emoney.$once( 'rad' , function( e , test1 , test2 ) {
-        expect( test1 ).to.equal( true );
-        expect( test2 ).to.equal( false );
-        done();
-      });
-      emoney.__invoke( 'rad' , [ true , false ]);
-    });
-
-    it( 'should emit the $emit event' , function( done ) {
-      emoney.$once( TestModules.$EMIT , function( e ) {
-        expect( e.type ).to.equal( TestModules.$EMIT );
-        done();
-      });
-      emoney.__invoke( 'rad' );
-    });
-  });
-
-  describe( '#__remove' , function() {
-
-    it( 'should delete the handlers[type] array if length is 0' , function( done ) {
-      emoney.__remove( 'gnarly' , Test );
-      expect( emoney.handlers ).to.not.have.property( 'gnarly' );
-      done();
-    });
-    
-    it( 'should delete the handlers[type] array if func is falsy' , function( done ) {
-      emoney.__add( 'gnarly' , Test , null );
-      expect( emoney.handlers.gnarly.length ).to.equal( 1 );
-      emoney.__remove( 'gnarly' );
-      expect( emoney.handlers ).to.not.have.property( 'gnarly' );
-      done();
-    });
-    
-    it( 'should remove all matched handlers' , function( done ) {
-      emoney.__add( 'gnarly' , Test , null );
-      emoney.__add( 'gnarly' , Test , null );
-      expect( emoney.handlers.gnarly.length ).to.equal( 2 );
-      emoney.__remove( 'gnarly' , Test );
-      expect( emoney.handlers ).to.not.have.property( 'gnarly' );
-      done();
-    });
-    
-    it( 'should remove only handlers matched by event type and handler function' , function( done ) {
-      emoney.__add( 'gnarly' , Test , null );
-      emoney.__add( 'gnarly' , Test2 , null );
-      emoney.__add( 'rad' , Test , null );
-      emoney.__add( 'rad' , Test2 , null );
-      expect( emoney.handlers.gnarly.length ).to.equal( 2 );
-      expect( emoney.handlers.rad.length ).to.equal( 2 );
-      emoney.__remove( 'gnarly' , Test );
-      emoney.__remove( 'rad' , Test );
-      expect( emoney.handlers.gnarly.length ).to.equal( 1 );
-      expect( emoney.handlers.rad.length ).to.equal( 1 );
-      emoney.$dispel();
-      done();
-    });
-
-    it( 'should emit the $dispel event' , function( done ) {
-      emoney.$once( TestModules.$DISPEL , function( e , args ) {
-        expect( e.type ).to.equal( TestModules.$DISPEL );
-        done();
-      });
-      emoney.__remove( 'gnarly' );
-    });
-  });
-
-  describe( '$set' , function() {
-
-    it( 'should emit the ' + TestModules.$SET + ' event' , function( done ) {
-      emoney.$once( TestModules.$SET , function( e , key ) {
-        expect( key ).to.equal( 'gnarly' );
-        expect( emoney[key] ).to.equal( true );
-        done();
-      });
-      emoney.$set( 'gnarly' , true );
-    });
-  });
-
-  describe( '$unset' , function() {
-
-    it( 'should emit the ' + TestModules.$UNSET + ' event' , function( done ) {
-      emoney.$once( TestModules.$UNSET , function( e , key ) {
-        expect( emoney ).to.not.have.property( 'gnarly' );
-        expect( key ).to.equal( 'gnarly' );
-        done();
-      });
-      emoney.$unset( 'gnarly' );
-    });
-  });
-
-  describe( '$when' , function() {
-    
-    it( 'should add an event handler' , function( done ) {
-      emoney.$when( 'gnarly' , Test );
-      expect( emoney.handlers ).to.have.property( 'gnarly' );
-      expect( emoney.handlers.gnarly.length ).to.equal( 1 );
-      emoney.$dispel();
-      done();
-    });
-
-    it( 'should use subject.handleE$ when handler is falsy' , function( done ) {
-      emoney.$when( 'rad' );
-      expect( emoney.handlers.rad[0].func ).to.equal( emoney.handleE$ );
-      emoney.$dispel( 'rad' );
-      done();
-    });
-
-    it( 'should bind args to each event handler' , function( done ) {
-      var arr = [];
-      for (var i = 0; i < 10; i++) { arr.push( i ) }
-      arr.forEach(function( i ) {
-        emoney.$when( 'rad' , [ i , 'test-' + i ] , function( e , n , test ) {
-          expect( n ).to.equal( i );
-          expect( test ).to.equal( 'test-' + i );
-        });
-      });
-      emoney.$emit( 'rad' );
-      emoney.$dispel( 'rad' );
-      done();
-    });
-
-    it( 'should emit the ' + TestModules.$WHEN + ' event' , function( done ) {
-      emoney.$once( TestModules.$WHEN , function( e , type , args ) {
-        expect( e.type ).to.equal( TestModules.$WHEN );
-        expect( e.target ).to.equal( emoney );
-        expect( type ).to.equal( 'gnarly' );
-        expect( args[2] ).to.equal( emoney.handleE$ );
-        done();
-      });
-      emoney.$when( 'gnarly' );
-      delete emoney.handlers.gnarly;
     });
   });
 
@@ -387,91 +383,77 @@
       done();
     });
 
-    it( 'should not remove private handlers if force is falsy' , function( done ) {
-      TestModules.$EVT.forEach(function( type ) {
-        emoney.$when( type );
-      });
+    it( 'should not remove wildcard handlers if wild is falsy' , function( done ) {
+      emoney.$when( TestModules.$WILDCARD );
       emoney.$dispel();
-      TestModules.$EVT.forEach(function( type ) {
-        expect( emoney.handlers ).to.have.property( type );
-        expect( emoney.handlers[type].length ).to.equal( 1 );
-      });
+      expect( emoney.handlers ).to.have.property( TestModules.$WILDCARD );
       done();
     });
 
-    it( 'should remove private handlers if force is truthy' , function( done ) {
+    it( 'should remove wildcard handlers if wild is truthy' , function( done ) {
       emoney.$dispel( null , true );
-      TestModules.$EVT.forEach(function( type ) {
-        expect( emoney.handlers ).to.not.have.property( type );
-      });
+      expect( emoney.handlers ).to.not.have.property( TestModules.$WILDCARD );
       done();
-    });
-
-    it( 'should emit the ' + TestModules.$DISPEL + ' event' , function( done ) {
-      emoney.$when( 'gnarly' );
-      emoney.$once( TestModules.$DISPEL , function( e , type , args ) {
-        expect( e.type ).to.equal( TestModules.$DISPEL );
-        expect( e.target ).to.equal( emoney );
-        expect( type ).to.equal( 'gnarly' );
-        expect( args[2] ).to.equal( null );
-        done();
-      });
-      emoney.$dispel( 'gnarly' );
     });
   });
 
-  describe( '$once' , function() {
+  describe( '$listen' , function() {
 
-    it( 'should remove an event handler after it is executed' , function( done ) {
-      emoney.$once( 'gnarly' , function() {
-        expect( emoney.handlers ).to.have.property( 'gnarly' );
+    it( 'should listen to any events emitted by subject' , function( done ) {
+      
+      var events = [ 'gnarly' , 'rad' ];
+      var emitted = {
+        emitter1: [],
+        emitter2: [],
+        emitter3: []
+      };
+
+      var emitter1 = E$({ name: 'emitter1' });
+      var emitter2 = E$({ name: 'emitter2' });
+      var emitter3 = E$({ name: 'emitter3' });
+
+      var listener = E$({
+        name: 'listener',
+        handleE$: function( e ) {
+          emitted[e.target.name].push( e.type );
+        }
       });
-      emoney.$emit( 'gnarly' );
-      expect( emoney.handlers ).to.not.have.property( 'gnarly' );
+      
+      listener.$listen([ emitter1 , emitter2 , emitter3 ]);
+
+      E$.aggregate([ emitter1 , emitter2 , emitter3 ]).$emit( events );
+
+      Object.keys( emitted ).forEach(function( key ) {
+        var evts = emitted[key];
+        expect( evts ).to.eql( events );
+      });
+
       done();
     });
+  });
 
-    it( 'should only be executed for one event type in eventList' , function( done ) {
-      var eventList = [ 'gnarly' , 'rad' ];
-      var result = [];
-      emoney.$once( eventList , function( e ) {
-        result.push( e.type );
-        eventList.forEach(function( type ) {
-          expect( emoney.handlers ).to.have.property( type );
-        });
+  describe( '$ignore' , function() {
+
+    it( 'should stop listening to any events emitted by subject' , function( done ) {
+      
+      var emitter1 = E$({ name: 'emitter1' });
+      var emitter2 = E$({ name: 'emitter2' });
+      var emitter3 = E$({ name: 'emitter3' });
+      var listener = E$({ name: 'listener' });
+      
+      listener.$listen([ emitter1 , emitter2 , emitter3 ]);
+      listener.$ignore([ emitter1 , emitter2 , emitter3 ]);
+
+      [
+        emitter1,
+        emitter2,
+        emitter3
+      ]
+      .forEach(function( emitter ) {
+        expect( emitter.handlers ).to.eql({});
       });
-      emoney.$emit( eventList );
-      emoney.$emit( eventList );
-      eventList.forEach(function( type ) {
-        expect( emoney.handlers ).to.not.have.property( type );
-      });
-      expect( result ).to.eql( eventList );
+
       done();
-    });
-
-    it( 'should bind args to each event handler' , function( done ) {
-      var arr = [];
-      for (var i = 0; i < 10; i++) { arr.push( i ) }
-      arr.forEach(function( i ) {
-        emoney.$once( 'rad' , [ i , 'test-' + i ] , function( e , n , test ) {
-          expect( n ).to.equal( i );
-          expect( test ).to.equal( 'test-' + i );
-        });
-      });
-      emoney.$emit( 'rad' );
-      done();
-    });
-
-    it( 'should emit the ' + TestModules.$WHEN + ' event' , function( done ) {
-      emoney.$once( TestModules.$WHEN , function( e , type , args ) {
-        expect( e.type ).to.equal( TestModules.$WHEN );
-        expect( e.target ).to.equal( emoney );
-        expect( type ).to.equal( 'gnarly' );
-        expect( args[2] ).to.equal( emoney.handleE$ );
-        done();
-      });
-      emoney.$when( 'gnarly' );
-      delete emoney.handlers.gnarly;
     });
   });
 
@@ -531,32 +513,13 @@
     });
   });
 
-  describe( 'Event' , function() {
-    
-    var Event = TestModules.Event;
-    
-    describe( '#isPrivate' , function() {
-
-      it( 'should determine whether an event string is designated as private' , function( done ) {
-        TestModules.$EVT.forEach(function( evt ) {
-          expect(Event.isPrivate( evt )).to.be.ok;
-        });
-        expect(Event.isPrivate( 'unset$' )).to.not.be.ok;
-        expect(Event.isPrivate( 'when' )).to.not.be.ok;
-        expect(Event.isPrivate( 'e$mit' )).to.not.be.ok;
-        done();
-
-      });
-    });
-  });
-
   describe( 'EventHandler' , function() {
 
     it( 'args should be unique to each event occurrence' , function( done ) {
       function handlerFunc( e ) {
         expect( arguments.length ).to.equal( 1 );
       }
-      var evt = new TestModules.Event.constructor( emoney , 'rad' );
+      var evt = new TestModules.Event( emoney , 'rad' );
       var evtHandler = new TestModules.EventHandler( handlerFunc , emoney );
       for (var i = 0; i < 10; i++) {
         evtHandler.invoke( evt );

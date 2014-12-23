@@ -1,4 +1,6 @@
 import {
+  $Date,
+  $Math,
   $Array,
   $Object,
   $HANDLE_E$,
@@ -7,6 +9,15 @@ import {
   $STRING,
   $UNDEFINED
 } from 'static/constants';
+
+export function $_uts() {
+  var now = $Date.now();
+  var last = $_uts.last;
+  var inc = 0.001;
+  last = (now === $Math.floor( last ) ? last : now) + inc;
+  $_uts.last = last;
+  return last;
+}
 
 export function $_length( subject ) {
   return subject.length;
@@ -64,12 +75,11 @@ export function $_is( subject , test ) {
   return (typeof test == $STRING) ? (typeof subject == test) : (subject instanceof test);
 }
 
-export function $_has( subject , key ) {
+/*export function $_has( subject , key ) {
   return subject.hasOwnProperty( key );
-}
+}*/
 
 export function $_ensureFunc( subject ) {
-  //return subject || function() {};
   return $_is( subject , $FUNCTION ) ? subject : function(){};
 }
 

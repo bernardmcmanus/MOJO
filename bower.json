@@ -5,12 +5,14 @@
   "authors": [
     "Bernard McManus"
   ],
-  "description": "The Modern JavaScript Object",
+  "description": "A lightweight event emitter for clients and servers",
   "main": "dist/emoney-0.2.0.min.js",
   "keywords": [
     "javascript",
-    "object",
-    "data"
+    "event",
+    "emitter",
+    "client",
+    "server"
   ],
   "license": "MIT",
   "ignore": [
